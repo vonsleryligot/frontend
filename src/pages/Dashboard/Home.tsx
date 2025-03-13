@@ -7,10 +7,6 @@ export default function Home() {
   const [dateTime, setDateTime] = useState<string>(new Date().toLocaleString());
   const [confirmTimeIn, setConfirmTimeIn] = useState<boolean>(false);
   const streamRef = useRef<MediaStream | null>(null); // Store media stream reference
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const [isProcessing, setIsProcessing] = useState(false);
-
-
 
   useEffect(() => {
     const startCamera = async () => {
@@ -63,22 +59,22 @@ export default function Home() {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext("2d");
       if (!context) return;
-  
+
       canvasRef.current.width = videoRef.current.videoWidth;
       canvasRef.current.height = videoRef.current.videoHeight;
-  
-      // Flip canvas horizontally to fix mirror effect
+
+      // Flip canvas horizontally to correct the mirror effect
       context.translate(canvasRef.current.width, 0);
       context.scale(-1, 1);
       context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-  
+
       const imageDataUrl = canvasRef.current.toDataURL("image/png");
       setCapturedImage(imageDataUrl);
-      
-      return saveImage(imageDataUrl); // Return promise so it can be awaited
+
+      // Save the image
+      await saveImage(imageDataUrl);
     }
   };
-  
 
   const saveImage = async (imageDataUrl: string) => {
     try {
@@ -88,7 +84,7 @@ export default function Home() {
       formData.append("image", blob, `time-in-${timestamp}.png`);
 
       // Send to the backend
-      const response = await fetch("http://localhost:4000/upload", {
+      const response = await fetch("http://localhost:5000/upload", {
         method: "POST",
         body: formData,
       });
@@ -100,29 +96,11 @@ export default function Home() {
     }
   };
 
-  const handleTimeIn = async () => {
-    try {
-      setIsProcessing(true);
-      await captureImage(); // Ensure image capture completes before proceeding
-  
-      const response = await fetch("http://localhost:4000/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shifts: "Morning" }),
-      });
-  
-      if (!response.ok) throw new Error("Time In failed");
-  
-      setConfirmTimeIn(true);
-      console.log("Time In successful!");
-    } catch (error) {
-      console.error("Error during Time In:", error);
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleTimeIn = () => {
+    captureImage();
+    setConfirmTimeIn(true);
   };
-  
-  
+
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6 p-4 dark:bg-gray-900 dark:text-white">
       <div className="col-span-12 flex flex-col items-center">
@@ -130,7 +108,7 @@ export default function Home() {
           {dateTime}
         </p>
 
-        {/* Apply mirroring effect to fix inverted video */}
+        {/* ✅ Apply mirroring effect to fix inverted video */}
         <video
           ref={videoRef}
           autoPlay
@@ -158,14 +136,11 @@ export default function Home() {
             </button>
           ) : (
             <button
-                onClick={handleTimeIn}
-                disabled={isProcessing}
-                className={`px-4 py-2 ${
-                  isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
-                } text-white rounded`}
-                >
-                  {isProcessing ? "Processing..." : "Time In"}
-              </button>
+              onClick={() => setConfirmTimeIn(false)}
+              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 dark:bg-yellow-700 dark:hover:bg-yellow-800"
+            >
+              Confirm Time In
+            </button>
           )}
         </div>
       </div>
