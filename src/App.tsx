@@ -15,45 +15,49 @@ import ToDo from "./pages/ToDo";
 import Workforce from "./pages/WorkForce";
 import Hours from "./pages/Hours";
 import OpenShifts from "./pages/OpenShifts";
+import Leave from "./pages/Leave";
 import { ShiftProvider } from "./pages/ShiftContext"; // Import ShiftProvider
+import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
 
 export default function App() {
   return (
-    <ShiftProvider>
-      <Router>
-        <ScrollToTop />
-        <Routes>
-          {/* Redirect to Sign In if no authentication */}
-          <Route path="/" element={<Navigate to="/signin" replace />} />
+    <AuthProvider> {/* Wrap everything with AuthProvider */}
+      <ShiftProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            {/* Redirect to Sign In if no authentication */}
+            <Route path="/" element={<Navigate to="/signin" replace />} />
 
-          {/* Protected Routes */}
-          <Route element={<PrivateRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Home />} />
-              <Route path="/profile" element={<UserProfiles />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/todo" element={<ToDo />} />
-              <Route path="/workforce" element={<Workforce />} />
-              <Route path="/leaves" element={<Calendar />} />
-              <Route path="/hours" element={<Hours />} />
-              <Route path="/paycheck" element={<Calendar />} />
-              <Route path="/shifts" element={<Calendar />} />
-              <Route path="/utilities" element={<Calendar />} />
-              <Route path="/hours/open-shifts" element={<OpenShifts />} />
+            {/* Protected Routes */}
+            <Route element={<PrivateRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Home />} />
+                <Route path="/profile" element={<UserProfiles />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/todo" element={<ToDo />} />
+                <Route path="/workforce" element={<Workforce />} />
+                <Route path="/leaves" element={<Leave />} />
+                <Route path="/hours" element={<Hours />} />
+                <Route path="/paycheck" element={<Calendar />} />
+                <Route path="/shifts" element={<Calendar />} />
+                <Route path="/utilities" element={<Calendar />} />
+                <Route path="/hours/open-shifts" element={<OpenShifts />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Auth Routes */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/verify-email" element={<Verification />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/account/reset-password" element={<ResetPassword />} />
+            {/* Auth Routes */}
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/verify-email" element={<Verification />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/account/reset-password" element={<ResetPassword />} />
 
-          {/* 404 Page */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-    </ShiftProvider>
+            {/* 404 Page */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+      </ShiftProvider>
+    </AuthProvider>
   );
 }

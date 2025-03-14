@@ -14,6 +14,7 @@ export default function SignUpForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -71,7 +72,7 @@ export default function SignUpForm() {
     setError("");
 
     if (step === 1) {
-      if (!firstName || !lastName || !email || !password || !confirmPassword) {
+      if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
         setError("All fields are required");
         return;
       }
@@ -102,6 +103,7 @@ export default function SignUpForm() {
         firstName,
         lastName,
         email,
+        phone,
         password,
         confirmPassword: password,  // Add this line
         country,
@@ -162,6 +164,11 @@ export default function SignUpForm() {
                   <div>
                     <Label>Email<span className="text-error-500">*</span></Label>
                     <Input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} aria-required="true" />
+                  </div>
+                  {/* Phone */}
+                  <div>
+                    <Label>Phone<span className="text-error-500">*</span></Label>
+                    <Input type="email" placeholder="Enter your email" value={phone} onChange={(e) => setPhone(e.target.value)} aria-required="true" />
                   </div>
                   {/* Password */}
                   <div>

@@ -5,12 +5,12 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-toastify"; // Optional: Add toast for feedback
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
 
-  // State for form fields
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -19,44 +19,85 @@ export default function UserInfoCard() {
     role: "",
   });
 
-  // Populate form data when modal opens
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        role: user.role || "",
-      });
-    }
-  }, [isOpen, user]);
+  // Populate form fields when `user` data changes
+useEffect(() => {
+  console.log(" User state changed:", user); // Log every user state change
+  if (user) {
+    setFormData((prev) => ({
+      ...prev,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || "",
+    }));
+  }
+}, [user]);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  // Handle save logic
-  const handleSave = async () => {
-    try {
-      const response = await fetch(`http://localhost:4000/accounts/${user?.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to update user info");
-      }
-  
-      console.log("User info updated successfully");
-      closeModal();
-    } catch (error) {
-      console.error("Error updating user info:", error);
+  // Save user profile updates
+const [loading, setLoading] = useState(false);
+
+const handleSave = async () => {
+  if (!user) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("Unauthorized: No token found");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    console.log("Sending to API:", JSON.stringify(formData)); // Log request
+
+    const response = await fetch(`http://localhost:4000/accounts/${user.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const responseData = await response.json();
+    console.log("API Response:", responseData); // Log API response
+
+    if (!response.ok) {
+      throw new Error(responseData.message || "Failed to update user info");
     }
-  };
-  
+
+    // Fetch updated data
+    const refreshedUser = await fetch(`http://localhost:4000/accounts/${user.id}?_=${Date.now()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const updatedUser = await refreshedUser.json();
+    console.log("Updated User:", updatedUser); // Log fetched user data
+
+    // Update both user and formData states
+    setUser(updatedUser);
+    setFormData(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    toast.success("Profile updated successfully!");
+    closeModal();
+  } catch (error) {
+    console.error("Error updating user info:", error);
+    toast.error(error instanceof Error ? error.message : "An error occurred");
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -69,35 +110,35 @@ export default function UserInfoCard() {
             <div>
               <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">First Name</p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.firstName || "User"}
+                {formData.firstName || "User"}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Last Name</p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.lastName || "User"}
+                {formData.lastName || "User"}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Email address</p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.email || "User"}
+                {formData.email || "User"}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Phone</p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.phone || "N/A"}
+                {formData.phone || "N/A"}
               </p>
             </div>
 
             <div>
               <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Role</p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user?.role || "N/A"}
+                {formData.role || "N/A"}
               </p>
             </div>
           </div>
@@ -159,7 +200,9 @@ export default function UserInfoCard() {
 
             <div className="flex items-center gap-3 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>Close</Button>
-              <Button size="sm" onClick={handleSave}>Save Changes</Button>
+              <Button size="sm" onClick={handleSave} disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           </form>
         </div>

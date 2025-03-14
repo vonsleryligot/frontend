@@ -101,18 +101,6 @@ const ToDo: React.FC = () => {
         Add Employee +
       </button>
 
-      {/* Employee List */}
-      {/* <h2 className="text-xl font-bold mt-6">Employee Directory</h2>
-      <ul className="mt-4">
-        {employees.map((employee) => (
-          <li key={employee.id} className="p-2 border-b">
-            <p className="font-medium">{employee.firstName} {employee.lastName}</p>
-            <p className="text-sm text-gray-600">Position: {employee.position}</p>
-            <p className="text-sm text-gray-600">Department: {employee.department}</p>
-          </li>
-        ))}
-      </ul> */}
-
       {/* Add Employee Form */}
       <div className="mt-6">
         <h3 className="text-lg font-semibold">Add Employee</h3>

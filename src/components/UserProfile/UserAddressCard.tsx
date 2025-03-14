@@ -5,20 +5,20 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
-import axios from "axios"; // Ensure axios is installed
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function UserAddressCard() {
   const { isOpen, openModal, closeModal } = useModal();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
 
-  // State for form fields
   const [formData, setFormData] = useState({
     country: "",
     city: "",
     postalCode: "",
   });
 
-  // Fetch user address from backend
+  // Populate form fields when user data changes
   useEffect(() => {
     if (user) {
       setFormData({
@@ -31,27 +31,68 @@ export default function UserAddressCard() {
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
-  // Handle save logic
+  // Save user profile updates
   const handleSave = async () => {
+    if (!user) return;
+  
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Unauthorized: No token found");
+      return;
+    }
+  
     try {
-      const token = localStorage.getItem("token"); // Ensure token is stored
-      await axios.put(
-        "http://localhost:4000/user/address",
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      console.log("User address updated successfully");
+      // Step 1: Send the update request to the backend
+      const response = await fetch(`http://localhost:4000/accounts/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!response.ok) {
+        const { message } = await response.json();
+        throw new Error(message || "Failed to update user info");
+      }
+  
+      // Step 2: Fetch the updated user data from the backend
+      const refreshedUser = await fetch(`http://localhost:4000/accounts/${user.id}?${Date.now()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      if (!refreshedUser.ok) {
+        throw new Error("Failed to fetch updated user info");
+      }
+  
+      const updatedUser = await refreshedUser.json();
+  
+      // Step 3: Update the UI directly with the backend response
+      setFormData({
+        country: updatedUser.country || "",
+        city: updatedUser.city || "",
+        postalCode: updatedUser.postalCode || "",
+      });
+  
+      // Step 4: Update the global user state and local storage
+      setUser(updatedUser); // Update global state
+      localStorage.setItem("user", JSON.stringify(updatedUser)); // Update local storage
+  
+      // Step 5: Show success message and close the modal
+      toast.success("Profile updated successfully!");
       closeModal();
     } catch (error) {
-      console.error("Error updating address:", error);
+      console.error("Error updating user info:", error);
+      toast.error(error instanceof Error ? error.message : "An error occurred");
     }
   };
-
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
@@ -65,21 +106,21 @@ export default function UserAddressCard() {
               <div>
                 <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Country</p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {formData.country || "N/A"}
+                  {user?.country || "N/A"}
                 </p>
               </div>
 
               <div>
                 <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">City/State</p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {formData.city || "N/A"}
+                  {user?.city || "N/A"}
                 </p>
               </div>
 
               <div>
                 <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Postal Code</p>
                 <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                  {formData.postalCode || "N/A"}
+                  {user?.postalCode || "N/A"}
                 </p>
               </div>
             </div>

@@ -2,22 +2,22 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 interface User {
   id: string;
-  firstName: string; // Ensure firstName is defined
+  firstName: string;
   lastName: string;
   email: string;
   role: string;
   phone: string;
-  country:string;
+  country: string;
   city: string;
-  postalCode:string;
+  postalCode: string;
 }
-
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (userData: User, token: string) => void;
   logout: () => void;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true); //  Add loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsAuthenticated(true);
     }
 
-    setLoading(false); //  Finish loading
+    setLoading(false);
   }, []);
 
   const login = (userData: User, token: string) => {
@@ -47,22 +47,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    setUser(null);
+    setIsAuthenticated(false);
+    window.location.reload();
 
-  setUser(null);
-  setIsAuthenticated(false);
-
-  window.location.href = "/signin"; //  Force re-render & redirect
-};
-
+  };
 
   if (loading) {
-    return <div>Loading...</div>; // Optional: Show a loading state while checking authentication
+    return <div>Loading...</div>;
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
