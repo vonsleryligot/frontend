@@ -6,8 +6,8 @@ export default function UserMetaCard() {
   const [profileImage, setProfileImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; // Access the uploaded file
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
@@ -19,7 +19,7 @@ export default function UserMetaCard() {
 
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result);
+        // setProfileImage(reader.result);
         setIsUploading(false);
 
         // Here you can add an API call to save the image to the server

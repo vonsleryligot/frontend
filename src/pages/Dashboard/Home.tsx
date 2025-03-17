@@ -62,36 +62,81 @@ export default function Home() {
   const captureImage = async () => {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext("2d");
-      if (!context) return;
+      if (!context) return null;
   
       canvasRef.current.width = videoRef.current.videoWidth;
       canvasRef.current.height = videoRef.current.videoHeight;
   
-      // Flip canvas horizontally to fix mirror effect
       context.translate(canvasRef.current.width, 0);
       context.scale(-1, 1);
       context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
   
       const imageDataUrl = canvasRef.current.toDataURL("image/png");
       setCapturedImage(imageDataUrl);
-      
-      return saveImage(imageDataUrl); // Return promise so it can be awaited
+  
+      return await saveImage(imageDataUrl); // Call saveImage function
     }
+    return null;
+  };
+    
+  const saveImage = async (imageDataUrl: string) => {
+    const base64Response = await fetch(imageDataUrl);
+    const blob = await base64Response.blob();
+    const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
+  
+    const formData = new FormData();
+    formData.append("image", file);
+  
+    console.log("Uploading FormData:", formData.get("image")); // Debugging output
+    const uploadResponse = await fetch("http://localhost:4000/uploads", {
+      method: "POST",
+      body: formData,
+    });
+  
+    if (!uploadResponse.ok) throw new Error("Image upload failed");
+  
+    const uploadData = await uploadResponse.json();
+    console.log("Upload response:", uploadData); // Debugging output
+  
+    return uploadData.image || null;
   };
   
 
   const handleTimeIn = async () => {
     try {
       setIsProcessing(true);
-      await captureImage(); // Ensure image capture completes before proceeding
+      const imageDataUrl = await captureImage();
   
-      const response = await fetch("http://localhost:4000/attendance", {
+      if (!imageDataUrl) {
+        throw new Error("Failed to capture image.");
+      }
+  
+      const base64Response = await fetch(imageDataUrl);
+      const blob = await base64Response.blob();
+      const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
+  
+      const formData = new FormData();
+      formData.append("image", file);
+  
+      console.log("Uploading FormData:", formData.get("image")); // Debugging output
+  
+      const uploadResponse = await fetch("http://localhost:4000/uploads", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shifts: "Morning" }),
+        body: formData,
       });
   
-      if (!response.ok) throw new Error("Time In failed");
+      if (!uploadResponse.ok) throw new Error("Image upload failed");
+  
+      const uploadData = await uploadResponse.json();
+      console.log("Upload response:", uploadData); // Debugging output
+  
+      const attendanceResponse = await fetch("http://localhost:4000/attendance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shifts: "Morning", image: uploadData.image }),
+      });
+  
+      if (!attendanceResponse.ok) throw new Error("Time In failed");
   
       setConfirmTimeIn(true);
       console.log("Time In successful!");
@@ -101,7 +146,6 @@ export default function Home() {
       setIsProcessing(false);
     }
   };
-  
   
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6 p-4 dark:bg-gray-900 dark:text-white">

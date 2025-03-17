@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify"; // Optional: Add toast for feedback
 
-export default function UserAddressCard() {
+export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user, setUser } = useAuth();
 
@@ -18,16 +17,18 @@ export default function UserAddressCard() {
     postalCode: "",
   });
 
-  // Populate form fields when user data changes
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        country: user.country || "",
-        city: user.city || "",
-        postalCode: user.postalCode || "",
-      });
-    }
-  }, [user]);
+  // Populate form fields when `user` data changes
+useEffect(() => {
+  console.log(" User state changed:", user); // Log every user state change
+  if (user) {
+    setFormData((prev) => ({
+      ...prev,
+      country: user.country || "",
+      city: user.city || "",
+      postalCode: user.postalCode || "",
+    }));
+  }
+}, [user]);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,61 +39,61 @@ export default function UserAddressCard() {
   };
 
   // Save user profile updates
-  const handleSave = async () => {
-    if (!user) return;
-  
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("Unauthorized: No token found");
-      return;
+const [loading, setLoading] = useState(false);
+
+const handleSave = async () => {
+  if (!user) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("Unauthorized: No token found");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    console.log("Sending to API:", JSON.stringify(formData)); // Log request
+
+    const response = await fetch(`http://localhost:4000/accounts/${user.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const responseData = await response.json();
+    console.log("API Response:", responseData); // Log API response
+
+    if (!response.ok) {
+      throw new Error(responseData.message || "Failed to update user info");
     }
-  
-    try {
-      // Step 1: Send the update request to the backend
-      const response = await fetch(`http://localhost:4000/accounts/${user.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-  
-      if (!response.ok) {
-        const { message } = await response.json();
-        throw new Error(message || "Failed to update user info");
-      }
-  
-      // Step 2: Fetch the updated user data from the backend
-      const refreshedUser = await fetch(`http://localhost:4000/accounts/${user.id}?${Date.now()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
-      if (!refreshedUser.ok) {
-        throw new Error("Failed to fetch updated user info");
-      }
-  
-      const updatedUser = await refreshedUser.json();
-  
-      // Step 3: Update the UI directly with the backend response
-      setFormData({
-        country: updatedUser.country || "",
-        city: updatedUser.city || "",
-        postalCode: updatedUser.postalCode || "",
-      });
-  
-      // Step 4: Update the global user state and local storage
-      setUser(updatedUser); // Update global state
-      localStorage.setItem("user", JSON.stringify(updatedUser)); // Update local storage
-  
-      // Step 5: Show success message and close the modal
-      toast.success("Profile updated successfully!");
-      closeModal();
-    } catch (error) {
-      console.error("Error updating user info:", error);
-      toast.error(error instanceof Error ? error.message : "An error occurred");
-    }
-  };
+
+    // Fetch updated data
+    const refreshedUser = await fetch(`http://localhost:4000/accounts/${user.id}?_=${Date.now()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const updatedUser = await refreshedUser.json();
+    console.log("Updated User:", updatedUser); // Log fetched user data
+
+    // Update both user and formData states
+    setUser(updatedUser);
+    setFormData(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    toast.success("Profile updated successfully!");
+    closeModal();
+  } catch (error) {
+    console.error("Error updating user info:", error);
+    toast.error(error instanceof Error ? error.message : "An error occurred");
+  } finally {
+    setLoading(false);
+  }
+};
+
   return (
     <>
       <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
@@ -125,7 +126,6 @@ export default function UserAddressCard() {
               </div>
             </div>
           </div>
-
           <button
             onClick={openModal}
             className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 lg:inline-flex lg:w-auto"
@@ -134,7 +134,6 @@ export default function UserAddressCard() {
           </button>
         </div>
       </div>
-
       {/* User Edit Modal */}
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
         <div className="relative w-full p-4 bg-white rounded-3xl dark:bg-gray-900 lg:p-11">
@@ -173,13 +172,10 @@ export default function UserAddressCard() {
                 />
               </div>
             </div>
-
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
-                Close
-              </Button>
-              <Button size="sm" onClick={handleSave}>
-                Save Changes
+                  <Button size="sm" variant="outline" onClick={closeModal}>Close</Button>
+                  <Button size="sm" onClick={handleSave} disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </form>
