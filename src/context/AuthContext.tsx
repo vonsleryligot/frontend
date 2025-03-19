@@ -1,29 +1,40 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-interface User {
+interface Employee {
   id: string;
   firstName: string;
+  middleName?: string;
   lastName: string;
-  email: string;
+  nickName?: string;
+  suffix?: string;
   role: string;
+  department: string;
+  birthDate: string;
+  maritalStatus: string;
+  citizenship: string;
+  gender: string;
+  email: string;
   phone: string;
-  country: string;
+  address: string;
   city: string;
   postalCode: string;
+  province: string;
+  country: string;
+  isVerified: boolean;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: User | null;
-  login: (userData: User, token: string) => void;
+  user: Employee | null;
+  login: (userData: Employee, token: string) => void;
   logout: () => void;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  setUser: React.Dispatch<React.SetStateAction<Employee | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Employee | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(false);
   }, []);
 
-  const login = (userData: User, token: string) => {
+  const login = (userData: Employee, token: string) => {
     localStorage.setItem("authToken", token);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
@@ -52,7 +63,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setIsAuthenticated(false);
     window.location.reload();
-
   };
 
   if (loading) {

@@ -83,34 +83,40 @@ export default function Home() {
     const base64Response = await fetch(imageDataUrl);
     const blob = await base64Response.blob();
     const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
-  
+
     const formData = new FormData();
     formData.append("image", file);
-  
-    console.log("Uploading FormData:", formData.get("image")); // Debugging output
+
+    console.log("📤 Uploading image:", formData.get("image")); // Debugging output
+
     const uploadResponse = await fetch("http://localhost:4000/uploads", {
-      method: "POST",
-      body: formData,
+        method: "POST",
+        body: formData,
     });
-  
-    if (!uploadResponse.ok) throw new Error("Image upload failed");
-  
+
+    if (!uploadResponse.ok) {
+        console.error("Image upload failed", await uploadResponse.text()); // Log response error
+        throw new Error("Image upload failed");
+    }
+
     const uploadData = await uploadResponse.json();
-    console.log("Upload response:", uploadData); // Debugging output
-  
+    console.log("Upload response:", uploadData); // Ensure response is logged
+
     return uploadData.image || null;
-  };
-  
+};
 
   const handleTimeIn = async () => {
     try {
       setIsProcessing(true);
+  
+      // Capture image but DO NOT upload in captureImage
       const imageDataUrl = await captureImage();
   
       if (!imageDataUrl) {
         throw new Error("Failed to capture image.");
       }
   
+      // Upload the image ONLY ONCE here
       const base64Response = await fetch(imageDataUrl);
       const blob = await base64Response.blob();
       const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
@@ -130,6 +136,7 @@ export default function Home() {
       const uploadData = await uploadResponse.json();
       console.log("Upload response:", uploadData); // Debugging output
   
+      // Ensure only one record is saved in attendance
       const attendanceResponse = await fetch("http://localhost:4000/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -175,11 +182,13 @@ export default function Home() {
         <div className="mt-4 flex gap-4">
           {!confirmTimeIn ? (
             <button
-              onClick={handleTimeIn}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
-            >
-              Time In
-            </button>
+            onClick={handleTimeIn}
+            disabled={isProcessing}
+            className={`px-4 py-2 ${isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"} text-white rounded`}
+          >
+            {isProcessing ? "Processing..." : "Time In"}
+          </button>
+          
           ) : (
             <button
                 onClick={handleTimeIn}
