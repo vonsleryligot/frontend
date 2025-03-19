@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import AddEmployee from "./AddEmployee";
-import { Eye } from "lucide-react"; // Importing an eye icon from lucide-react
+import { Eye } from "lucide-react";
 
-interface User {
+interface Employee {
   id: number;
   firstName: string;
   middleName: string;
@@ -26,16 +26,16 @@ interface User {
 }
 
 const WorkForce = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<Employee[]>([]);
+  const [filteredEmployee, setFilteredEmployee] = useState<Employee[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
-  const limit = 5; // Limit users per page
+  const limit = 5;
 
-  const [showModal, setShowModal] = useState(false); // State to manage modal visibility
-  const [newEmployee, setNewEmployee] = useState<Partial<User>>({
+  const [showModal, setShowModal] = useState(false);
+  const [newEmployee, setNewEmployee] = useState<Partial<Employee>>({
     firstName: "",
     lastName: "",
     email: "",
@@ -43,47 +43,51 @@ const WorkForce = () => {
   });
 
   useEffect(() => {
-    fetchUsers();
+    fetchEmployee();
   }, [page]);
 
   useEffect(() => {
-    setFilteredUsers(
-      users.filter((AddEmployee) =>
-        `${AddEmployee.firstName} ${AddEmployee.lastName} ${AddEmployee.email} ${AddEmployee.phone}`
+    setFilteredEmployee(
+      users.filter((employee) =>
+        `${employee.firstName} ${employee.lastName} ${employee.email} ${employee.phone}`
           .toLowerCase()
           .includes(search.toLowerCase())
       )
     );
   }, [search, users]);
 
-  const fetchUsers = async () => {
+  const fetchEmployee = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/employees?page=${page}&limit=${limit}`, {
-
+      const response = await fetch(`http://localhost:4000/employee?page=${page}&limit=${limit}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
       });
-
+  
       if (!response.ok) {
         throw new Error(`Failed to fetch employee: ${response.statusText}`);
       }
-
-      const data: User[] = await response.json();
-      setUsers(data.filter((user): user is User & { isVerified: boolean } => 'isVerified' in user && !!user.isVerified));
+  
+      const data: Employee[] = await response.json();
+      console.log("Fetched employees:", data);
+  
+      setUsers(data); // Directly setting users
+  
+      console.log("Updated users state:", users); // Add this log
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
-  const handleViewUser = (employee: User) => {
-    console.log("Viewing user:", employee);
-};
-
+  
+  
+  
+  const handleViewEmployee = (employee: Employee) => {
+    console.log("Viewing Employee:", employee);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewEmployee({ ...newEmployee, [e.target.name]: e.target.value });
@@ -91,24 +95,24 @@ const WorkForce = () => {
 
   const handleAddEmployee = async () => {
     try {
-      const response = await fetch("http://localhost:4000/employees", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newEmployee),
-      });
+        const response = await fetch("http://localhost:4000/employees/add-employee", { 
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newEmployee),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to add employee: ${response.statusText}`);
-      }
+        if (!response.ok) {
+            throw new Error(`Failed to add employee: ${response.statusText}`);
+        }
 
-      setShowModal(false);
-      fetchUsers(); // Refresh the list after adding an employee
+        setShowModal(false);
+        fetchEmployee(); // Re-fetch all employees para sure
     } catch (err: any) {
-      console.error("Error adding employee:", err.message);
+        console.error("Error adding employee:", err.message);
     }
-  };
+};
 
   return (
     <div className="overflow-x-auto p-4">
@@ -123,21 +127,20 @@ const WorkForce = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
           <button
-            onClick={() => setShowModal(true)} // Open modal
+            onClick={() => setShowModal(true)}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
           >
             + Add Employee
           </button>
         </div>
       </div>
-  
-      {/* Render AddEmployee Modal */}
+
       <AddEmployee 
         showModal={showModal} 
         setShowModal={setShowModal} 
         onAddEmployee={handleAddEmployee} 
       />
-  
+
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {loading ? (
         <p>Loading users...</p>
@@ -154,17 +157,17 @@ const WorkForce = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((AddEmployee) => (
-                <tr key={AddEmployee.id} className="hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400">
-                  <td className="px-4 py-2 border">{AddEmployee.firstName} {AddEmployee.lastName}</td>
-                  <td className="px-4 py-2 border">{AddEmployee.email}</td>
-                  <td className="px-4 py-2 border">{AddEmployee.role}</td>
-                  <td className="px-4 py-2 border">{AddEmployee.department}</td>
-                  <td className="px-4 py-2 border">{AddEmployee.phone}</td>
+            {filteredEmployee.length > 0 ? (
+              filteredEmployee.map((employee) => (
+                <tr key={employee.id} className="hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400">
+                  <td className="px-4 py-2 border">{employee.firstName} {employee.lastName}</td>
+                  <td className="px-4 py-2 border">{employee.email}</td>
+                  <td className="px-4 py-2 border">{employee.role}</td>
+                  <td className="px-4 py-2 border">{employee.department}</td>
+                  <td className="px-4 py-2 border">{employee.phone}</td>
                   <td className="px-4 py-2 border">
                     <button 
-                      onClick={() => handleViewUser(AddEmployee)}
+                      onClick={() => handleViewEmployee(employee)}
                       className="px-3 py-1 bg-blue-500 text-white rounded flex items-center space-x-1 hover:bg-blue-700"
                     >
                       <Eye size={16} />
@@ -175,7 +178,7 @@ const WorkForce = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-4 py-2 border text-center">No users found</td>
+                <td colSpan={6} className="px-4 py-2 border text-center">No users found</td>
               </tr>
             )}
           </tbody>
@@ -183,6 +186,6 @@ const WorkForce = () => {
       )}
     </div>
   );
-  }
+};
 
 export default WorkForce;

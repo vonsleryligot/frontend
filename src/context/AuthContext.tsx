@@ -30,14 +30,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const userData = localStorage.getItem("user");
-
+  
     if (token && userData) {
-      setUser(JSON.parse(userData));
-      setIsAuthenticated(true);
+      try {
+        setUser(JSON.parse(userData));
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        localStorage.removeItem("user"); // Remove corrupted data
+      }
     }
-
+  
     setLoading(false);
   }, []);
+  
 
   const login = (userData: User, token: string) => {
     localStorage.setItem("authToken", token);
