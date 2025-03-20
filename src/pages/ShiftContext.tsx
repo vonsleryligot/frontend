@@ -21,8 +21,6 @@ const ShiftContext = createContext<ShiftContextType | undefined>(undefined);
 
 export const ShiftProvider = ({ children }: { children: React.ReactNode }) => {
   const [shifts, setShifts] = useState<Shift[]>([
-    // { id: 1, role: "Cashier", date: "2025-03-15", time: "09:00 AM - 05:00 PM", status: "Pending" },
-    // { id: 2, role: "Manager", date: "2025-03-16", time: "10:00 AM - 06:00 PM", status: "Pending" },
   ]);
 
   const timeIn = (shiftId: number, time: string) => {

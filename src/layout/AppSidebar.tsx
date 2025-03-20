@@ -40,30 +40,30 @@ const navItems: NavItem[] = [
     icon: <GridIcon />, 
     name: "Dashboard", 
     path: "/dashboard", 
-    roles: ["SuperAdmin", "Admin", "User"] 
+    roles: ["Manager", "Admin", "User"] 
   },
   { 
     icon: <FileIcon />, 
     name: "To Do", 
     path: "/todo", 
-    roles: ["SuperAdmin", "Admin"] 
+    roles: ["Manager", "Admin"] 
   },
   { 
     icon: <GroupIcon />, 
     name: "WorkForce", 
     path: "/workforce", 
-    roles: ["SuperAdmin", "Admin"] 
+    roles: ["Manager", "Admin"] 
   },
   { 
     icon: <PaperPlaneIcon />, 
     name: "Leaves", 
     path: "/leaves", 
-    roles: ["SuperAdmin", "Admin", "User"] 
+    roles: ["Manager", "Admin", "User"] 
   },
   {
     icon: <TimeIcon />,
     name: "Hours",
-    roles: ["SuperAdmin", "Admin", "User"],
+    roles: ["Manager", "Admin", "User"],
     subItems: [
       {
         name: "Open Shifts",
@@ -82,12 +82,12 @@ const navItems: NavItem[] = [
     icon: <DollarLineIcon />, 
     name: "Pay Check", 
     path: "/paycheck", 
-    roles: ["SuperAdmin", "Admin", "User"] 
+    roles: ["Manager", "Admin", "User"] 
   },
   { 
     icon: <TableIcon />, 
     name: "Shifts", 
-    roles: ["SuperAdmin", "Admin", "User"], 
+    roles: ["Manager", "Admin", "User"], 
     subItems: [
       { name: "Calendar", path: "/calendar", pro: false },
     ],
@@ -96,7 +96,7 @@ const navItems: NavItem[] = [
     icon: <PencilIcon />, 
     name: "Utilities", 
     path: "/utilities", 
-    roles: ["SuperAdmin", "Admin"] 
+    roles: ["Manager", "Admin"] 
   },
 ];
 

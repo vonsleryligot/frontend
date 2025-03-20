@@ -16,8 +16,9 @@ import Workforce from "./pages/WorkForce";
 import Hours from "./pages/Hours";
 import OpenShifts from "./pages/OpenShifts";
 import Leave from "./pages/Leave";
-import { ShiftProvider } from "./pages/ShiftContext"; // Import ShiftProvider
-import { AuthProvider } from "./context/AuthContext"; // Import AuthProvider
+import Timesheet from "./pages/Timesheet"; // ✅ Import Timesheet Page
+import { ShiftProvider } from "./pages/ShiftContext"; 
+import { AuthProvider } from "./context/AuthContext"; 
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
                 <Route path="/shifts" element={<Calendar />} />
                 <Route path="/utilities" element={<Calendar />} />
                 <Route path="/hours/open-shifts" element={<OpenShifts />} />
+                <Route path="/timesheet" element={<Timesheet />} /> {/* ✅ Added Timesheet Page */}
               </Route>
             </Route>
 

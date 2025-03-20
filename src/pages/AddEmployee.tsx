@@ -4,7 +4,6 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const departments = ["Accountant", "IT", "Associate"];
 const maritalStatuses = ["Married", "Single", "Divorced"];
-const genders = ["Male", "Female", "Rather not to say"];
 
 type Employee = {
   firstName: string;
@@ -92,58 +91,55 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     validateForm();
   }, [newEmployee]);
 
- const handleAddEmployee = async () => {
+  const handleAddEmployee = async () => {
     if (!isFormValid) return;
 
     const formattedEmployee = {
-        ...newEmployee,
-        birthDate: newEmployee.birthDate ? newEmployee.birthDate.toISOString().split("T")[0] : null,
+      ...newEmployee,
+      birthDate: newEmployee.birthDate ? newEmployee.birthDate.toISOString().split("T")[0] : null,
     };
 
     try {
-        const response = await fetch("http://localhost:4000/employee/add-employee", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formattedEmployee),
-        });
+      const response = await fetch("http://localhost:4000/employee/add-employee", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formattedEmployee),
+      });
 
-        if (!response.ok) {
-            const errorResponse = await response.json();
-            throw new Error(errorResponse.message || `Failed to add employee: ${response.status}`);
-        }
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(`Failed to add employee: ${response.status} - ${errorMessage}`);
+      }
 
-        const data = await response.json();
-        console.log("Employee added successfully:", data);
-        onAddEmployee(data);
-
-        setNewEmployee({
-            firstName: "",
-            middleName: "",
-            lastName: "",
-            nickName: "",
-            suffix: "",
-            role: "",
-            department: "",
-            birthDate: null,
-            maritalStatus: "",
-            citizenship: "",
-            gender: "",
-            email: "",
-            phone: "",
-            address: "",
-            city: "",
-            postalCode: "",
-            province: "",
-            country: "",
-        });
-        setErrors({});
-        setShowModal(false);
-    } catch (error: any) {
-        console.error("Error adding employee:", error.message);
-        alert(`Error: ${error.message}`);
+      const data = await response.json();
+      onAddEmployee(data);
+      setNewEmployee({
+        firstName: "",
+        middleName: "",
+        lastName: "",
+        nickName: "",
+        suffix: "",
+        role: "",
+        department: "",
+        birthDate: null,
+        maritalStatus: "",
+        citizenship: "",
+        gender: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        postalCode: "",
+        province: "",
+        country: "",
+      });
+      setErrors({});
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error adding employee:", error);
+      alert(`Error: ${error instanceof Error ? error.message : "An unknown error occurred"}`);
     }
-};
-
+  };
 
   if (!showModal) return null;
 
@@ -191,20 +187,6 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
                   {maritalStatuses.map((status) => (
                     <option key={status} value={status}>
                       {status}
-                    </option>
-                  ))}
-                </select>
-              ) : key === "gender" ? (
-                <select
-                  name="gender"
-                  value={newEmployee.gender}
-                  onChange={handleInputChange}
-                  className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}
-                >
-                  <option value="">Select Gender</option>
-                  {genders.map((gender) => (
-                    <option key={gender} value={gender}>
-                      {gender}
                     </option>
                   ))}
                 </select>
