@@ -15,7 +15,7 @@ type Employee = {
   citizenship: string;
   gender: string;
   email: string;
-  phone: string;
+  phone: number | "";
   address: string;
   city: string;
   postalCode: string;
@@ -56,18 +56,26 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
+  
+    let updatedValue: any = value;
+  
+    // Convert phone input to number (if applicable)
+    if (name === "phone") {
+      if (!/^\d*$/.test(value)) return; // Prevent non-numeric input
+      updatedValue = value === "" ? "" : Number(value); // Convert to number, allow empty string
+    }
+  
     setNewEmployee((prev) => ({
       ...prev,
-      [name]: value, // Keep other fields as strings
+      [name]: updatedValue,
     }));
-
+  
     setErrors((prev) => ({
       ...prev,
       [name]: value.trim() ? "" : "This field is required",
     }));
   };
-
+  
   const handleDateChange = (date: Date | null) => {
     if (date) {
       setNewEmployee((prev) => ({

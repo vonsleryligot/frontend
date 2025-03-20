@@ -35,12 +35,8 @@ const WorkForce = () => {
   const limit = 5;
 
   const [showModal, setShowModal] = useState(false);
-  const [newEmployee, setNewEmployee] = useState<Partial<Employee>>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-  });
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     fetchEmployee();
@@ -49,7 +45,7 @@ const WorkForce = () => {
   useEffect(() => {
     setFilteredEmployee(
       users.filter((employee) =>
-        `${employee.firstName} ${employee.lastName} ${employee.email} ${employee.phone}`
+        `${employee.firstName} ${employee.lastName} ${employee.email} ${employee.phone} ${employee.department}`
           .toLowerCase()
           .includes(search.toLowerCase())
       )
@@ -61,58 +57,26 @@ const WorkForce = () => {
       setLoading(true);
       const response = await fetch(`http://localhost:4000/employee?page=${page}&limit=${limit}`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-  
+
       if (!response.ok) {
         throw new Error(`Failed to fetch employee: ${response.statusText}`);
       }
-  
+
       const data: Employee[] = await response.json();
-      console.log("Fetched employees:", data);
-  
-      setUsers(data); // Directly setting users
-  
-      console.log("Updated users state:", users); // Add this log
+      setUsers(data);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-  
-  
-  
+
   const handleViewEmployee = (employee: Employee) => {
-    console.log("Viewing Employee:", employee);
+    setSelectedEmployee(employee);
+    setShowDetailsModal(true);
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewEmployee({ ...newEmployee, [e.target.name]: e.target.value });
-  };
-
-  const handleAddEmployee = async () => {
-    try {
-        const response = await fetch("http://localhost:4000/employees/add-employee", { 
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newEmployee),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to add employee: ${response.statusText}`);
-        }
-
-        setShowModal(false);
-        fetchEmployee(); // Re-fetch all employees para sure
-    } catch (err: any) {
-        console.error("Error adding employee:", err.message);
-    }
-};
 
   return (
     <div className="overflow-x-auto p-4">
@@ -138,7 +102,7 @@ const WorkForce = () => {
       <AddEmployee 
         showModal={showModal} 
         setShowModal={setShowModal} 
-        onAddEmployee={handleAddEmployee} 
+        onAddEmployee={fetchEmployee} 
       />
 
       {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -160,7 +124,7 @@ const WorkForce = () => {
             {filteredEmployee.length > 0 ? (
               filteredEmployee.map((employee) => (
                 <tr key={employee.id} className="hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400">
-                  <td className="px-4 py-2 border">{employee.firstName} {employee.lastName}</td>
+                  <td className="px-4 py-2 border">{employee.firstName} {employee.middleName} {employee.lastName}</td>
                   <td className="px-4 py-2 border">{employee.email}</td>
                   <td className="px-4 py-2 border">{employee.role}</td>
                   <td className="px-4 py-2 border">{employee.department}</td>
@@ -171,7 +135,7 @@ const WorkForce = () => {
                       className="px-3 py-1 bg-blue-500 text-white rounded flex items-center space-x-1 hover:bg-blue-700"
                     >
                       <Eye size={16} />
-                      <span>View</span>
+                      <span></span>
                     </button>
                   </td>
                 </tr>
@@ -184,8 +148,42 @@ const WorkForce = () => {
           </tbody>
         </table>
       )}
+
+      {/* Employee Details Modal */}
+      {/* Employee Details Modal */}
+      {showDetailsModal && selectedEmployee && (
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-4 rounded-t-2xl">
+              <h3 className="text-xl font-semibold text-center">Employee Details</h3>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+                <p><strong>Name:</strong> {selectedEmployee.firstName} {selectedEmployee.middleName} {selectedEmployee.lastName}</p>
+                <p><strong>Email:</strong> {selectedEmployee.email}</p>
+                <p><strong>Phone:</strong> {selectedEmployee.phone}</p>
+                <p><strong>Role:</strong> {selectedEmployee.role}</p>
+                <p><strong>Department:</strong> {selectedEmployee.department}</p>
+                <p><strong>Birth Date:</strong> {selectedEmployee.birthDate}</p>
+                <p><strong>Gender:</strong> {selectedEmployee.gender}</p>
+                <p><strong>Citizenship:</strong> {selectedEmployee.citizenship}</p>
+                <p><strong>Address:</strong> {selectedEmployee.address}, {selectedEmployee.city}, {selectedEmployee.province}, {selectedEmployee.country}</p>
+              </div>
+              
+              <div className="flex justify-end mt-4">
+                <button 
+                  onClick={() => setShowDetailsModal(false)} 
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-all duration-200 shadow-lg"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
 export default WorkForce;
