@@ -1,43 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 export default function UserMetaCard() {
   const { user } = useAuth();
-  const [profileImage, setProfileImage] = useState(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]; // Access the uploaded file
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        alert("Please upload a valid image file.");
-        return;
+  //  Fetch Profile Image from Backend
+  useEffect(() => {
+    const fetchProfileImage = async () => {
+      try {
+        const response = await fetch(`http://localhost:4000/profile-uploads/${user?.id}`);
+        if (!response.ok) throw new Error("Failed to fetch profile image");
+        
+        const data = await response.json();
+        if (data.profile?.profile_image) {
+          setProfileImage(`http://localhost:4000${data.profile.profile_image}`);
+        }
+      } catch (error) {
+        console.error("Error fetching profile image:", error);
       }
+    };
 
-      setIsUploading(true);
+    if (user?.id) fetchProfileImage();
+  }, [user]);
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // setProfileImage(reader.result);
-        setIsUploading(false);
-
-        // Here you can add an API call to save the image to the server
-        // Example:
-        // uploadImageToServer(file).then(() => {
-        //   setIsUploading(false);
-        // }).catch((error) => {
-        //   console.error("Error uploading image:", error);
-        //   setIsUploading(false);
-        // });
-      };
-      reader.onerror = () => {
-        console.error("Error reading file");
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
+  // ✅ Handle Image Upload
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+  
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
+  
+    setIsUploading(true);
+  
+    const formData = new FormData();
+    formData.append("profile_image", file);
+    formData.append("account_id", user?.id ?? "");
+    
+    try {
+      const response = await fetch("http://localhost:4000/profile-uploads", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        setProfileImage(`http://localhost:4000${data.profile.profile_image}`); // Update image preview
+      } else {
+        console.error("Upload failed:", data.message);
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
+  
 
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">

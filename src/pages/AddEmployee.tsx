@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
+const departments = ["Accountant", "IT", "Associate"];
+const maritalStatuses = ["Married", "Single", "Divorced"];
+const genders = ["Male", "Female", "Rather not to say"];
+
 type Employee = {
   firstName: string;
   middleName: string;
@@ -10,7 +14,7 @@ type Employee = {
   suffix: string;
   role: string;
   department: string;
-  birthDate: Date;  // Changed from string to Date
+  birthDate: Date | null;
   maritalStatus: string;
   citizenship: string;
   gender: string;
@@ -38,7 +42,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     suffix: "",
     role: "",
     department: "",
-    birthDate: new Date(),  // Default to today's date
+    birthDate: null,
     maritalStatus: "",
     citizenship: "",
     gender: "",
@@ -54,35 +58,19 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-  
     let updatedValue: any = value;
-  
-    // Convert phone input to number (if applicable)
-    if (name === "phone") {
-      if (!/^\d*$/.test(value)) return; // Prevent non-numeric input
-      updatedValue = value === "" ? "" : Number(value); // Convert to number, allow empty string
-    }
-  
-    setNewEmployee((prev) => ({
-      ...prev,
-      [name]: updatedValue,
-    }));
-  
-    setErrors((prev) => ({
-      ...prev,
-      [name]: value.trim() ? "" : "This field is required",
-    }));
+
+    if (name === "phone" && !/^\d*$/.test(value)) return;
+    if (name === "phone") updatedValue = value === "" ? "" : Number(value);
+
+    setNewEmployee((prev) => ({ ...prev, [name]: updatedValue }));
+    setErrors((prev) => ({ ...prev, [name]: value.trim() ? "" : "This field is required" }));
   };
-  
+
   const handleDateChange = (date: Date | null) => {
-    if (date) {
-      setNewEmployee((prev) => ({
-        ...prev,
-        birthDate: date, // Update birthDate with selected date
-      }));
-    }
+    setNewEmployee((prev) => ({ ...prev, birthDate: date }));
   };
 
   const validateForm = () => {
@@ -104,15 +92,13 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     validateForm();
   }, [newEmployee]);
 
-  const handleAddEmployee = async () => {
+ const handleAddEmployee = async () => {
     if (!isFormValid) return;
 
     const formattedEmployee = {
         ...newEmployee,
-        birthDate: newEmployee.birthDate.toISOString().split("T")[0], // Convert Date to string
+        birthDate: newEmployee.birthDate ? newEmployee.birthDate.toISOString().split("T")[0] : null,
     };
-
-    console.log("Sending data to backend:", JSON.stringify(formattedEmployee, null, 2));
 
     try {
         const response = await fetch("http://localhost:4000/employee/add-employee", {
@@ -122,17 +108,14 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
         });
 
         if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`Failed to add employee: ${response.status} - ${errorMessage}`);
+            const errorResponse = await response.json();
+            throw new Error(errorResponse.message || `Failed to add employee: ${response.status}`);
         }
 
         const data = await response.json();
         console.log("Employee added successfully:", data);
-
-        // Update UI with new employee
         onAddEmployee(data);
-        
-        // Reset form
+
         setNewEmployee({
             firstName: "",
             middleName: "",
@@ -141,7 +124,7 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
             suffix: "",
             role: "",
             department: "",
-            birthDate: new Date(), // Reset to today's date
+            birthDate: null,
             maritalStatus: "",
             citizenship: "",
             gender: "",
@@ -153,19 +136,13 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
             province: "",
             country: "",
         });
-
         setErrors({});
         setShowModal(false);
-    } catch (error) {
-        console.error("Error adding employee:", error);
-        if (error instanceof Error) {
-          alert(`Error: ${error.message}`);
-      } else {
-          alert(`An unknown error occurred`);
-      }
+    } catch (error: any) {
+        console.error("Error adding employee:", error.message);
+        alert(`Error: ${error.message}`);
     }
 };
-
 
 
   if (!showModal) return null;
@@ -179,15 +156,58 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
             <div key={key} className="flex flex-col">
               {key === "birthDate" ? (
                 <DatePicker
-                  selected={newEmployee.birthDate}
+                  selected={newEmployee.birthDate || null}
                   onChange={handleDateChange}
                   className="border p-2 w-full border-gray-300 rounded"
                   dateFormat="yyyy-MM-dd"
                   showYearDropdown
                   scrollableYearDropdown
                   yearDropdownItemNumber={100}
-                  maxDate={new Date()} // Prevent future dates
+                  maxDate={new Date()}
+                  placeholderText="Select Birthdate"
                 />
+              ) : key === "department" ? (
+                <select
+                  name="department"
+                  value={newEmployee.department}
+                  onChange={handleInputChange}
+                  className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
+                    </option>
+                  ))}
+                </select>
+              ) : key === "maritalStatus" ? (
+                <select
+                  name="maritalStatus"
+                  value={newEmployee.maritalStatus}
+                  onChange={handleInputChange}
+                  className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}
+                >
+                  <option value="">Select Marital Status</option>
+                  {maritalStatuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              ) : key === "gender" ? (
+                <select
+                  name="gender"
+                  value={newEmployee.gender}
+                  onChange={handleInputChange}
+                  className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}
+                >
+                  <option value="">Select Gender</option>
+                  {genders.map((gender) => (
+                    <option key={gender} value={gender}>
+                      {gender}
+                    </option>
+                  ))}
+                </select>
               ) : (
                 <input
                   type="text"

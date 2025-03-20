@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useAuth } from "../../context/AuthContext";
@@ -6,8 +6,27 @@ import { useNavigate } from "react-router-dom";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useAuth(); // ✅ Get user from AuthContext
-  const navigate = useNavigate(); // ✅ Define navigate using useNavigate
+  const { user } = useAuth(); // Get user from AuthContext
+  const navigate = useNavigate(); // Define navigate using useNavigate
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+    useEffect(() => {
+      const fetchProfileImage = async () => {
+        try {
+          const response = await fetch(`http://localhost:4000/profile-uploads/${user?.id}`);
+          if (!response.ok) throw new Error("Failed to fetch profile image");
+          
+          const data = await response.json();
+          if (data.profile?.profile_image) {
+            setProfileImage(`http://localhost:4000${data.profile.profile_image}`);
+          }
+        } catch (error) {
+          console.error("Error fetching profile image:", error);
+        }
+      };
+  
+      if (user?.id) fetchProfileImage();
+    }, [user]);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -78,16 +97,19 @@ export default function UserDropdown() {
         <div className="flex items-center space-x-4">
           {/* Profile Image */}
           <div className="w-12 h-12 overflow-hidden rounded-full border border-gray-300 dark:border-gray-600">
-            <img
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName?.charAt(0) || "U")}&background=random&color=fff`}
+          <img
+              src={
+                profileImage
+                  ? profileImage
+                  : `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName || "U")}&background=random&color=fff`
+              }
               alt="User"
               onError={(e) => {
-                e.currentTarget.src = "/images/default-profile.png"; // Fallback image
+                e.currentTarget.src = "/images/default-profile.png";
               }}
               className="object-cover w-full h-full"
             />
-          </div>
-
+           </div>
           {/* User Info */}
           <div className="flex flex-col">
             <span className="font-semibold text-lg text-gray-700 dark:text-gray-300">
