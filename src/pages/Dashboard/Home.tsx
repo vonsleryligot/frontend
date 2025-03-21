@@ -8,6 +8,7 @@ export default function Home() {
   const [dateTime, setDateTime] = useState<string>(new Date().toLocaleString());
   const [confirmTimeIn, setConfirmTimeIn] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const startCamera = async () => {
@@ -21,6 +22,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error accessing webcam:", error);
+        setError("Error accessing webcam.");
       }
     };
 
@@ -72,26 +74,25 @@ export default function Home() {
     const response = await fetch(imageDataUrl);
     const blob = await response.blob();
     const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
-  
+
     const formData = new FormData();
     formData.append("image", file);
-  
+
     const res = await fetch("http://localhost:4000/uploads", {
       method: "POST",
       body: formData,
     });
-  
+
     if (!res.ok) throw new Error("Failed to upload image");
     const data = await res.json();
-  
-    return data.image.image; // << Return image path only
+
+    return data.image.image_name; // Return image name (path or file name)
   };
-  
-  
 
   const handleTimeIn = async () => {
     try {
       setIsProcessing(true);
+      setError(null); // Clear any previous errors
 
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
@@ -101,12 +102,14 @@ export default function Home() {
 
       const imageFilename = await uploadImage(imageDataUrl, timestamp);
 
+      // Send the attendance data with image filename
       const attendanceRes = await fetch("http://localhost:4000/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          image: imageFilename,
-          shifts: "Morning",
+          image: imageFilename, // This should be the correct filename or path
+          shifts: "Morning", // Adjust as necessary
+          timeIn: now.toISOString(), // This is correct timestamp format
         }),
       });
 
@@ -116,6 +119,7 @@ export default function Home() {
       console.log("Time In recorded!");
     } catch (error) {
       console.error("Time In Error:", error);
+      setError(error.message || "An error occurred while processing Time In.");
     } finally {
       setIsProcessing(false);
     }
@@ -145,6 +149,8 @@ export default function Home() {
           />
         )}
 
+        {error && <p className="text-red-500 mt-4">{error}</p>}
+
         <div className="mt-4">
           <button
             onClick={handleTimeIn}
@@ -166,3 +172,4 @@ export default function Home() {
     </div>
   );
 }
+    
