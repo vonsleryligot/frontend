@@ -3,29 +3,31 @@ import { useRef, useState, useEffect } from "react";
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [dateTime, setDateTime] = useState<string>(new Date().toLocaleString());
   const [confirmTimeIn, setConfirmTimeIn] = useState<boolean>(false);
-  const streamRef = useRef<MediaStream | null>(null); // Store media stream reference
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const [isProcessing, setIsProcessing] = useState(false);
-
-
 
   useEffect(() => {
     const startCamera = async () => {
       try {
-        if (!streamRef.current) {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user" }, // Ensures front camera is used
-          });
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" },
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error("Error accessing webcam: ", error);
+        console.error("Error accessing webcam:", error);
+      }
+    };
+
+    const stopCamera = () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       }
     };
 
@@ -35,27 +37,14 @@ export default function Home() {
       setDateTime(new Date().toLocaleString());
     }, 1000);
 
-    const stopCamera = () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopCamera();
-      } else if (!streamRef.current) {
-        startCamera();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) stopCamera();
+      else startCamera();
+    });
 
     return () => {
       clearInterval(interval);
       stopCamera();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -63,97 +52,75 @@ export default function Home() {
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext("2d");
       if (!context) return null;
-  
+
       canvasRef.current.width = videoRef.current.videoWidth;
       canvasRef.current.height = videoRef.current.videoHeight;
-  
+
+      // Flip image horizontally for front camera
       context.translate(canvasRef.current.width, 0);
       context.scale(-1, 1);
       context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-  
+
       const imageDataUrl = canvasRef.current.toDataURL("image/png");
       setCapturedImage(imageDataUrl);
-  
-      return await saveImage(imageDataUrl); // Call saveImage function
+      return imageDataUrl;
     }
     return null;
   };
-    
-  const saveImage = async (imageDataUrl: string) => {
-    const base64Response = await fetch(imageDataUrl);
-    const blob = await base64Response.blob();
-    const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
 
+  const uploadImage = async (imageDataUrl: string, timestamp: string) => {
+    const response = await fetch(imageDataUrl);
+    const blob = await response.blob();
+    const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
+  
     const formData = new FormData();
     formData.append("image", file);
-
-    console.log("📤 Uploading image:", formData.get("image")); // Debugging output
-
-    const uploadResponse = await fetch("http://localhost:4000/uploads", {
-        method: "POST",
-        body: formData,
+  
+    const res = await fetch("http://localhost:4000/uploads", {
+      method: "POST",
+      body: formData,
     });
-
-    if (!uploadResponse.ok) {
-        console.error("Image upload failed", await uploadResponse.text()); // Log response error
-        throw new Error("Image upload failed");
-    }
-
-    const uploadData = await uploadResponse.json();
-    console.log("Upload response:", uploadData); // Ensure response is logged
-
-    return uploadData.image || null;
-};
+  
+    if (!res.ok) throw new Error("Failed to upload image");
+    const data = await res.json();
+  
+    return data.image.image; // << Return image path only
+  };
+  
+  
 
   const handleTimeIn = async () => {
     try {
       setIsProcessing(true);
-  
-      // Capture image but DO NOT upload in captureImage
+
+      const now = new Date();
+      const timestamp = now.toISOString().replace(/[:.]/g, "-");
       const imageDataUrl = await captureImage();
-  
-      if (!imageDataUrl) {
-        throw new Error("Failed to capture image.");
-      }
-  
-      // Upload the image ONLY ONCE here
-      const base64Response = await fetch(imageDataUrl);
-      const blob = await base64Response.blob();
-      const file = new File([blob], `attendance-${timestamp}.png`, { type: "image/png" });
-  
-      const formData = new FormData();
-      formData.append("image", file);
-  
-      console.log("Uploading FormData:", formData.get("image")); // Debugging output
-  
-      const uploadResponse = await fetch("http://localhost:4000/uploads", {
-        method: "POST",
-        body: formData,
-      });
-  
-      if (!uploadResponse.ok) throw new Error("Image upload failed");
-  
-      const uploadData = await uploadResponse.json();
-      console.log("Upload response:", uploadData); // Debugging output
-  
-      // Ensure only one record is saved in attendance
-      const attendanceResponse = await fetch("http://localhost:4000/attendance", {
+
+      if (!imageDataUrl) throw new Error("No image captured");
+
+      const imageFilename = await uploadImage(imageDataUrl, timestamp);
+
+      const attendanceRes = await fetch("http://localhost:4000/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ shifts: "Morning", image: uploadData.image }),
+        body: JSON.stringify({
+          image: imageFilename,
+          shifts: "Morning",
+        }),
       });
-  
-      if (!attendanceResponse.ok) throw new Error("Time In failed");
-  
+
+      if (!attendanceRes.ok) throw new Error("Failed to save attendance");
+
       setConfirmTimeIn(true);
-      console.log("Time In successful!");
+      console.log("Time In recorded!");
     } catch (error) {
-      console.error("Error during Time In:", error);
+      console.error("Time In Error:", error);
     } finally {
       setIsProcessing(false);
     }
   };
-  
+
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6 p-4 dark:bg-gray-900 dark:text-white">
       <div className="col-span-12 flex flex-col items-center">
@@ -161,12 +128,11 @@ export default function Home() {
           {dateTime}
         </p>
 
-        {/* Apply mirroring effect to fix inverted video */}
         <video
           ref={videoRef}
           autoPlay
           className="w-96 h-96 border rounded-full object-cover"
-          style={{ transform: "scaleX(-1)" }} // Mirror the video preview
+          style={{ transform: "scaleX(-1)" }}
         />
 
         <canvas ref={canvasRef} className="hidden" />
@@ -179,27 +145,22 @@ export default function Home() {
           />
         )}
 
-        <div className="mt-4 flex gap-4">
-          {!confirmTimeIn ? (
-            <button
+        <div className="mt-4">
+          <button
             onClick={handleTimeIn}
-            disabled={isProcessing}
-            className={`px-4 py-2 ${isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"} text-white rounded`}
+            disabled={isProcessing || confirmTimeIn}
+            className={`px-4 py-2 ${
+              isProcessing || confirmTimeIn
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-500 hover:bg-blue-600"
+            } text-white rounded`}
           >
-            {isProcessing ? "Processing..." : "Time In"}
+            {isProcessing
+              ? "Processing..."
+              : confirmTimeIn
+              ? "Already Timed In"
+              : "Time In"}
           </button>
-          
-          ) : (
-            <button
-                onClick={handleTimeIn}
-                disabled={isProcessing}
-                className={`px-4 py-2 ${
-                  isProcessing ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600 dark:bg-blue-700 dark:hover:bg-blue-800"
-                } text-white rounded`}
-                >
-                  {isProcessing ? "Processing..." : "Time In"}
-              </button>
-          )}
         </div>
       </div>
     </div>
