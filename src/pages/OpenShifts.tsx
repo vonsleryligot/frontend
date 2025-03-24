@@ -18,7 +18,7 @@ export default function OpenShifts() {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const response = await fetch("http://localhost:4000/attendance"); // Adjust API URL if needed
+        const response = await fetch("http://localhost:4000/attendances"); // Adjust API URL if needed
         if (!response.ok) throw new Error("Failed to fetch attendance records");
 
         const data: Shift[] = await response.json(); // Ensure response matches Shift type

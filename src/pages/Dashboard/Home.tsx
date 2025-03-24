@@ -86,34 +86,35 @@ export default function Home() {
     try {
       setIsProcessing(true);
       setError(null);
-
+  
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
       const imageDataUrl = await captureImage();
-
+  
       if (!imageDataUrl) throw new Error("No image captured");
       const imageFilename = await uploadImage(imageDataUrl, timestamp);
       if (!imageFilename) throw new Error("Failed to upload image");
-
+  
       const attendanceRes = await fetch("http://localhost:4000/attendances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageId: imageFilename, 
+          imageId: imageFilename,
           shifts: "Morning",
-          time: now.toISOString(), 
+          time: now.toISOString(),
         }),
       });
-
+  
       if (!attendanceRes.ok) throw new Error("Failed to save attendance");
       const data = await attendanceRes.json();
-
-      if (data.attendance.timeOut) {
+      const attendance = data.data;
+  
+      if (attendance.timeOut) {
         setConfirmTimeOut(true);
       } else {
         setConfirmTimeIn(true);
       }
-
+  
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message || "An error occurred while processing attendance.");
@@ -124,7 +125,7 @@ export default function Home() {
       setIsProcessing(false);
     }
   };
-
+  
   return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
       <div className="col-span-12 flex flex-col items-center">
