@@ -55,7 +55,7 @@ const WorkForce = () => {
   const fetchEmployee = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:4000/employee?page=${page}&limit=${limit}`, {
+      const response = await fetch(`http://localhost:4000/accounts`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
