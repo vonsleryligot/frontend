@@ -16,7 +16,8 @@ import Workforce from "./pages/WorkForce";
 import Hours from "./pages/Hours";
 import OpenShifts from "./pages/OpenShifts";
 import Leave from "./pages/Leave";
-import Timesheet from "./pages/Timesheet"; // ✅ Import Timesheet Page
+import Timesheet from "./pages/Timesheet";
+// import ViewUserProfile from "./pages/ViewUserProfile";
 import { ShiftProvider } from "./pages/ShiftContext"; 
 import { AuthProvider } from "./context/AuthContext"; 
 
@@ -44,7 +45,8 @@ export default function App() {
                 <Route path="/shifts" element={<Calendar />} />
                 <Route path="/utilities" element={<Calendar />} />
                 <Route path="/hours/open-shifts" element={<OpenShifts />} />
-                <Route path="/timesheet" element={<Timesheet />} /> {/* ✅ Added Timesheet Page */}
+                <Route path="/timesheet" element={<Timesheet />} /> 
+                {/* <Route path="/profile/:id" element={<ViewUserProfile />} /> */}
               </Route>
             </Route>
 

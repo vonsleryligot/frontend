@@ -150,7 +150,6 @@ const WorkForce = () => {
       )}
 
       {/* Employee Details Modal */}
-      {/* Employee Details Modal */}
       {showDetailsModal && selectedEmployee && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 p-4">
           <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto">
