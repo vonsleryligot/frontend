@@ -11,6 +11,9 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Get User Data from localStorage
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   useEffect(() => {
     const startCamera = async () => {
       try {
@@ -87,7 +90,13 @@ export default function Home() {
       setIsProcessing(true);
       setError(null);
   
+      // Ensure the user is logged in
+      if (!user || !user.id) {
+        throw new Error("User is not logged in. Please log in again.");
+      }
+  
       const now = new Date();
+      const hours = now.getHours(); // Get current hour (0-23)
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
       const imageDataUrl = await captureImage();
   
@@ -95,37 +104,46 @@ export default function Home() {
       const imageFilename = await uploadImage(imageDataUrl, timestamp);
       if (!imageFilename) throw new Error("Failed to upload image");
   
-      const attendanceRes = await fetch("http://localhost:4000/attendances", {
+      // Determine shift dynamically
+      let shift = "Open Shift"; // Default to Open Shift
+      if (hours >= 6 && hours < 14) {
+        shift = "Morning";
+      } else if (hours >= 14 && hours < 22) {
+        shift = "Afternoon";
+      } else if (hours >= 22 || hours < 6) {
+        shift = "Night";
+      }
+  
+      const response = await fetch("http://localhost:4000/attendances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user.id, // User ID retrieved correctly
           imageId: imageFilename,
-          shifts: "Morning",
+          shifts: shift, // Dynamically assigned shift
           time: now.toISOString(),
         }),
       });
   
-      if (!attendanceRes.ok) throw new Error("Failed to save attendance");
-      const data = await attendanceRes.json();
+      if (!response.ok) throw new Error("Failed to save attendance");
+      const data = await response.json();
       const attendance = data.data;
   
+      // Toggle between Time In and Time Out
       if (attendance.timeOut) {
+        setConfirmTimeIn(false); // Reset for new time-in
         setConfirmTimeOut(true);
       } else {
         setConfirmTimeIn(true);
+        setConfirmTimeOut(false);
       }
-  
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message || "An error occurred while processing attendance.");
-      } else {
-        setError("An unexpected error occurred.");
-      }
+      setError(error instanceof Error ? error.message : "An unexpected error occurred.");
     } finally {
       setIsProcessing(false);
     }
   };
-  
+
   return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
       <div className="col-span-12 flex flex-col items-center">
@@ -145,9 +163,9 @@ export default function Home() {
         <div className="mt-4">
           <button
             onClick={handleAttendance}
-            disabled={isProcessing || (confirmTimeIn && confirmTimeOut)}
+            disabled={isProcessing}
             className={`px-4 py-2 ${
-              isProcessing || (confirmTimeIn && confirmTimeOut)
+              isProcessing
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-500 hover:bg-blue-600"
             } text-white rounded`}
@@ -155,7 +173,7 @@ export default function Home() {
             {isProcessing
               ? "Processing..."
               : confirmTimeOut
-              ? "Already Timed Out"
+              ? "Time In Again"
               : confirmTimeIn
               ? "Time Out"
               : "Time In"}
