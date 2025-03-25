@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
-// import NotificationDropdown from "../components/header/NotificationDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 
 const AppHeader: React.FC = () => {
@@ -83,18 +82,20 @@ const AppHeader: React.FC = () => {
             {/* Cross Icon */}
           </button>
 
-          <Link to="/" className="lg:hidden">
-            <img
-              className="dark:hidden"
-              src="./images/logo/logo.png"
-              alt="Logo"
-            />
-            <img
-              className="hidden dark:block"
-              src="./images/logo/logo-dark.png"
-              alt="Logo"
-            />
-          </Link>
+          {/* <div className="hidden lg:flex">
+            <Link to="/" className="w-auto max-w-[120px]">
+              <img
+                className="dark:hidden w-full h-auto"
+                src="./images/logo/logo.png"
+                alt="Logo"
+              />
+              <img
+                className="hidden dark:block w-full h-auto"
+                src="./images/logo/logo-dark.png"
+                alt="Logo"
+              />
+            </Link>
+          </div> */}
 
           <button
             onClick={toggleApplicationMenu}

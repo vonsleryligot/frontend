@@ -155,44 +155,44 @@ export default function Home() {
   return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
       <div className="col-span-12 flex flex-col items-center">
-        <p className="mb-2 font-semibold text-gray-800 text-sm dark:text-white/90">
+        <p className="mb-2 font-semibold text-gray-800 text-sm dark:text-white/90 text-center">
           {dateTime}
         </p>
-
+  
         <video
           ref={videoRef}
           autoPlay
-          className="w-96 h-96 border rounded-full object-cover"
+          className="w-full max-w-sm aspect-square border rounded-full object-cover"
           style={{ transform: "scaleX(-1)" }}
         />
         <canvas ref={canvasRef} className="hidden" />
-
-        {error && <p className="text-red-500 mt-4">{error}</p>}
-
-        <div className="mt-4">
+  
+        {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
+  
+        <div className="mt-4 w-full flex justify-center">
           {(!hasTimedIn || (hasTimedIn && hasTimedOut)) && (
             <button
               onClick={handleAttendance}
               disabled={isProcessing}
-              className={`px-4 py-2 ${
+              className={`px-6 py-2 text-sm md:text-base ${
                 isProcessing
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-blue-500 hover:bg-blue-600"
-              } text-white rounded`}
+              } text-white rounded transition`}
             >
               {isProcessing ? "Processing..." : "Time In"}
             </button>
           )}
-
+  
           {hasTimedIn && !hasTimedOut && (
             <button
               onClick={handleAttendance}
               disabled={isProcessing}
-              className={`px-4 py-2 ${
+              className={`px-6 py-2 text-sm md:text-base ${
                 isProcessing
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-green-500 hover:bg-green-600"
-              } text-white rounded`}
+              } text-white rounded transition`}
             >
               {isProcessing ? "Processing..." : "Time Out"}
             </button>
@@ -200,5 +200,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-  );
+  );  
 }
