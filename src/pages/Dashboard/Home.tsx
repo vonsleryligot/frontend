@@ -155,7 +155,7 @@ export default function Home() {
   return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
       <div className="col-span-12 flex flex-col items-center">
-        <p className="mb-2 font-semibold text-gray-800 text-sm dark:text-white/90 text-center">
+        <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm text-center">
           {dateTime}
         </p>
   
