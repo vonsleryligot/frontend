@@ -6,13 +6,13 @@ export default function UserMetaCard() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-  //  Fetch Profile Image from Backend
+  // Fetch profile image
   useEffect(() => {
     const fetchProfileImage = async () => {
       try {
         const response = await fetch(`http://localhost:4000/profile-uploads/${user?.id}`);
         if (!response.ok) throw new Error("Failed to fetch profile image");
-        
+
         const data = await response.json();
         if (data.profile?.profile_image) {
           setProfileImage(`http://localhost:4000${data.profile.profile_image}`);
@@ -23,34 +23,31 @@ export default function UserMetaCard() {
     };
 
     if (user?.id) fetchProfileImage();
-  }, [user]);
+  }, [user?.id]);
 
-  // ✅ Handle Image Upload
+  // Upload profile image
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
-  
-    if (!file.type.startsWith("image/")) {
+    if (!file || !file.type.startsWith("image/")) {
       alert("Please upload a valid image file.");
       return;
     }
-  
+
     setIsUploading(true);
-  
+
     const formData = new FormData();
     formData.append("profile_image", file);
     formData.append("account_id", user?.id ?? "");
-    
+
     try {
       const response = await fetch("http://localhost:4000/profile-uploads", {
         method: "POST",
         body: formData,
       });
-  
+
       const data = await response.json();
-  
       if (response.ok) {
-        setProfileImage(`http://localhost:4000${data.profile.profile_image}`); // Update image preview
+        setProfileImage(`http://localhost:4000${data.profile.profile_image}?${Date.now()}`);
       } else {
         console.error("Upload failed:", data.message);
       }
@@ -60,7 +57,6 @@ export default function UserMetaCard() {
       setIsUploading(false);
     }
   };
-  
 
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
@@ -77,7 +73,7 @@ export default function UserMetaCard() {
               }
               alt="User"
               onError={(e) => {
-                e.currentTarget.src = "/images/default-profile.png"; // Fallback image
+                e.currentTarget.src = "/images/default-profile.png";
               }}
               className="object-cover w-full h-full"
             />
@@ -86,7 +82,7 @@ export default function UserMetaCard() {
               className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm cursor-pointer opacity-0 hover:opacity-100 transition-opacity"
               aria-label="Upload profile image"
             >
-              {isUploading ? "Uploading..." : "Upload"}
+              {isUploading ? "Uploading..." : profileImage ? "Change" : "Upload"}
               <input
                 id="profile-image-upload"
                 type="file"
@@ -101,9 +97,7 @@ export default function UserMetaCard() {
           {/* User Details */}
           <div className="order-3 xl:order-2">
             <h4 className="mb-2 text-2xl font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-              <span>
-                {user?.firstName || "User"} {user?.lastName || ""}
-              </span>
+            {user?.title || ""} {user?.firstName || "User"} {user?.lastName || ""}
             </h4>
             <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
               <p className="text-base text-gray-500 dark:text-gray-400">
