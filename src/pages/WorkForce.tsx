@@ -82,23 +82,22 @@ const WorkForce = () => {
     <div className="overflow-x-auto p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-gray-700 dark:text-gray-400">Employee</h2>
-        <div className="flex space-x-4">
-          <input
-            type="text"
-            placeholder="Search employees..."
-            className="border p-2 rounded"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
-          >
-            + Add Employee
-          </button>
-        </div>
+        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
+            <input
+              type="text"
+              placeholder="Search employees..."
+              className="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 hover:bg-gray-800 text-white rounded-md shadow-md transition-all duration-200"
+            >
+              + Add Employee
+            </button>
+          </div>
       </div>
-
       <AddEmployee 
         showModal={showModal} 
         setShowModal={setShowModal} 
@@ -109,27 +108,27 @@ const WorkForce = () => {
       {loading ? (
         <p>Loading users...</p>
       ) : (
-        <table className="min-w-full border-collapse border">
-          <thead>
-            <tr className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-400">
-              <th className="px-4 py-2 border">Employee Details</th>
-              <th className="px-4 py-2 border">Email</th>
-              <th className="px-4 py-2 border">Role</th>
-              <th className="px-4 py-2 border">Department</th>
-              <th className="px-4 py-2 border">Contact Number</th>
-              <th className="px-4 py-2 border">Action</th>
+        <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left min-w-full">
+          <thead className="bg-gray-100 text-gray-700 dark:text-gray-300 dark:bg-white/[0.03]">
+            <tr>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Employee Details</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Email</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Role</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Department</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Contact Number</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-300">
             {filteredEmployee.length > 0 ? (
               filteredEmployee.map((employee) => (
-                <tr key={employee.id} className="hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-400">
-                  <td className="px-4 py-2 border">{employee.firstName} {employee.middleName} {employee.lastName}</td>
-                  <td className="px-4 py-2 border">{employee.email}</td>
-                  <td className="px-4 py-2 border">{employee.role}</td>
-                  <td className="px-4 py-2 border">{employee.department}</td>
-                  <td className="px-4 py-2 border">{employee.phone}</td>
-                  <td className="px-4 py-2 border">
+                <tr key={employee.id} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <td className="border border-gray-300 p-3 text-sm">{employee.firstName} {employee.middleName} {employee.lastName}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{employee.email}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{employee.role}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{employee.department}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{employee.phone}</td>
+                  <td className="border border-gray-300 p-3 text-sm">
                     <button 
                       onClick={() => handleViewEmployee(employee)}
                       className="px-3 py-1 bg-blue-500 text-white rounded flex items-center space-x-1 hover:bg-blue-700"

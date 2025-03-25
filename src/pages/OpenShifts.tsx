@@ -196,7 +196,7 @@ export default function OpenShifts() {
       {/* Responsive Table Wrapper */}
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
-          <thead className="bg-gray-100 text-gray-700">
+          <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
             <tr>
               <th className="border border-gray-300 p-3 text-sm font-semibold">Employee</th>
               <th className="border border-gray-300 p-3 text-sm font-semibold">Date</th>
@@ -208,16 +208,16 @@ export default function OpenShifts() {
               <th className="border border-gray-300 p-3 text-sm font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
             {shifts.length > 0 ? (
               shifts.map((shift) => (
-                <tr key={shift.id} className="hover:bg-gray-600">
-                  <td className="border border-gray-300 p-3">{getUserFullName(shift.userId)}</td>
-                  <td className="border border-gray-300 p-3">{shift.date}</td>
-                  <td className="border border-gray-300 p-3">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
-                  <td className="border border-gray-300 p-3">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
-                  <td className="border border-gray-300 p-3">{shift.totalHours ? parseFloat(shift.totalHours).toFixed(2) : "-"}</td>
-                  <td className="border border-gray-300 p-3">{shift.shifts}</td>
+                <tr key={shift.id} className="hover:bg-gray-800">
+                  <td className="border border-gray-300 p-3 text-sm">{getUserFullName(shift.userId)}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? parseFloat(shift.totalHours).toFixed(2) : "-"}</td>
+                  <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
                   <td className="border border-gray-300 p-4 items-center">
                     {shift.status}
                     <FaSyncAlt
