@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaSyncAlt } from "react-icons/fa"; // Import the circular arrow icon
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Shift {
   id: number;
@@ -116,63 +118,69 @@ export default function OpenShifts() {
       console.error("No shift selected or ID is missing.");
       return;
     }
-
+  
     try {
-      // Log the action as pending
+      const shiftDate = selectedShift.date;
+      const formattedTimeIn = `${shiftDate}T${selectedShift.timeIn}`;
+      const formattedTimeOut = `${shiftDate}T${selectedShift.timeOut}`;
+  
       const actionLogResponse = await fetch("http://localhost:4000/action-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shiftId: selectedShift.id,
           userId: selectedShift.userId,
-          timeIn: selectedShift.timeIn,
-          timeOut: selectedShift.timeOut,
-          status: "pending", // Initially set to pending
+          timeIn: formattedTimeIn,
+          timeOut: formattedTimeOut,
+          status: "pending",
         }),
       });
-      
+  
       const actionLogData = await actionLogResponse.json();
       if (!actionLogResponse.ok) {
         throw new Error(actionLogData.message || "Failed to create action log");
       }
-
-      console.log("Action log created, status set to pending:", actionLogData);
-
-      // Optionally, update the UI
+  
+      toast.success("Shift update request submitted!", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+  
       setShifts((prev) =>
         prev.map((shift) =>
           shift.id === selectedShift.id ? { ...shift, status: "pending" } : shift
         )
       );
+  
+      setSelectedShift(null);
     } catch (error) {
       console.error("Error creating action log:", error);
+      toast.error("Something went wrong. Please try again.");
     }
-  };
+  };  
+  // // Handle approving the change
+  // const handleApproveChange = async (actionId: number) => {
+  //   try {
+  //     const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
+  //       method: "PUT",
+  //     });
 
-  // Handle approving the change
-  const handleApproveChange = async (actionId: number) => {
-    try {
-      const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
-        method: "PUT",
-      });
+  //     const data = await response.json();
+  //     if (!response.ok) {
+  //       throw new Error(data.message || "Failed to approve change");
+  //     }
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to approve change");
-      }
-
-      console.log("Change approved successfully:", data);
-      // Optionally, update the UI
-      setActionLogs((prev) =>
-        prev.map((log) =>
-          log.id === actionId ? { ...log, status: "approved" } : log
-        )
-      );
-    } catch (error) {
-      console.error("Error approving change:", error);
-    }
-  };
-
+  //     console.log("Change approved successfully:", data);
+  //     // Optionally, update the UI
+  //     setActionLogs((prev) =>
+  //       prev.map((log) =>
+  //         log.id === actionId ? { ...log, status: "approved" } : log
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error("Error approving change:", error);
+  //   }
+  // };
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";

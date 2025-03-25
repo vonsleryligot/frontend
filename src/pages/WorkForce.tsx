@@ -142,7 +142,7 @@ const WorkForce = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-2 border text-center">No users found</td>
+                <td colSpan={6} className="px-4 py-2 border text-center">No Employee found</td>
               </tr>
             )}
           </tbody>
