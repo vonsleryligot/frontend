@@ -4,13 +4,15 @@ import "react-datepicker/dist/react-datepicker.css";
 
 const departments = ["Accountant", "IT", "Associate"];
 const maritalStatuses = ["Married", "Single", "Divorced"];
+const roles = ["Admin", "User"];
+const genders = ["Male", "Female"];
 
 type Employee = {
   firstName: string;
   middleName: string;
   lastName: string;
   nickName: string;
-  suffix: string;
+  suffix?: string;
   role: string;
   department: string;
   birthDate: Date | null;
@@ -24,6 +26,8 @@ type Employee = {
   postalCode: string;
   province: string;
   country: string;
+  password: string;
+  confirmPassword: string;
 };
 
 type AddEmployeeProps = {
@@ -52,6 +56,8 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     postalCode: "",
     province: "",
     country: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -65,7 +71,20 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     if (name === "phone") updatedValue = value === "" ? "" : Number(value);
 
     setNewEmployee((prev) => ({ ...prev, [name]: updatedValue }));
-    setErrors((prev) => ({ ...prev, [name]: value.trim() ? "" : "This field is required" }));
+
+    if (name !== "suffix") {
+      setErrors((prev) => ({ ...prev, [name]: value.trim() ? "" : "This field is required" }));
+    }
+
+    if (name === "password" || name === "confirmPassword") {
+      setErrors((prev) => ({
+        ...prev,
+        confirmPassword:
+          name === "confirmPassword" && value !== newEmployee.password
+            ? "Passwords do not match"
+            : "",
+      }));
+    }
   };
 
   const handleDateChange = (date: Date | null) => {
@@ -77,11 +96,16 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     let isValid = true;
 
     Object.entries(newEmployee).forEach(([key, value]) => {
-      if (!value || (typeof value === "string" && !value.trim())) {
+      if (key !== "suffix" && (!value || (typeof value === "string" && !value.trim()))) {
         newErrors[key] = "This field is required";
         isValid = false;
       }
     });
+
+    if (newEmployee.password !== newEmployee.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+      isValid = false;
+    }
 
     setErrors(newErrors);
     setIsFormValid(isValid);
@@ -91,55 +115,38 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
     validateForm();
   }, [newEmployee]);
 
-  const handleAddEmployee = async () => {
+const handleAddEmployee = async () => {
     if (!isFormValid) return;
 
     const formattedEmployee = {
-      ...newEmployee,
-      birthDate: newEmployee.birthDate ? newEmployee.birthDate.toISOString().split("T")[0] : null,
+        ...newEmployee,
+        birthDate: newEmployee.birthDate ? newEmployee.birthDate.toISOString().split("T")[0] : null,
+        password: "defaultPassword123", // Temporary, dapat naa sa UI
+        confirmPassword: "defaultPassword123", // Temporary
     };
 
+    console.log("Sending Data:", formattedEmployee); // Debugging Output
+
     try {
-      const response = await fetch("http://localhost:4000/employee/add-employee", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formattedEmployee),
-      });
+        const response = await fetch("http://localhost:4000/employee/add-employee", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formattedEmployee),
+        });
 
-      if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(`Failed to add employee: ${response.status} - ${errorMessage}`);
-      }
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            throw new Error(`Failed to add employee: ${response.status} - ${errorMessage}`);
+        }
 
-      const data = await response.json();
-      onAddEmployee(data);
-      setNewEmployee({
-        firstName: "",
-        middleName: "",
-        lastName: "",
-        nickName: "",
-        suffix: "",
-        role: "",
-        department: "",
-        birthDate: null,
-        maritalStatus: "",
-        citizenship: "",
-        gender: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        postalCode: "",
-        province: "",
-        country: "",
-      });
-      setErrors({});
-      setShowModal(false);
+        const data = await response.json();
+        onAddEmployee(data);
+        setShowModal(false);
     } catch (error) {
-      console.error("Error adding employee:", error);
-      alert(`Error: ${error instanceof Error ? error.message : "An unknown error occurred"}`);
+        console.error("Error adding employee:", error);
     }
-  };
+};
+
 
   if (!showModal) return null;
 
@@ -162,37 +169,23 @@ const AddEmployee: React.FC<AddEmployeeProps> = ({ showModal, setShowModal, onAd
                   maxDate={new Date()}
                   placeholderText="Select Birthdate"
                 />
-              ) : key === "department" ? (
+              ) : key === "role" || key === "gender" || key === "department" || key === "maritalStatus" ? (
                 <select
-                  name="department"
-                  value={newEmployee.department}
+                  name={key}
+                  value={(newEmployee as any)[key]}
                   onChange={handleInputChange}
                   className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}
                 >
-                  <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
-                    </option>
-                  ))}
-                </select>
-              ) : key === "maritalStatus" ? (
-                <select
-                  name="maritalStatus"
-                  value={newEmployee.maritalStatus}
-                  onChange={handleInputChange}
-                  className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}
-                >
-                  <option value="">Select Marital Status</option>
-                  {maritalStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
+                  <option value="">Select {key.charAt(0).toUpperCase() + key.slice(1)}</option>
+                  {(key === "role" ? roles : key === "gender" ? genders : key === "department" ? departments : maritalStatuses).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>
               ) : (
                 <input
-                  type="text"
+                  type={key.includes("password") ? "password" : "text"}
                   name={key}
                   placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
                   className={`border p-2 w-full ${errors[key] ? "border-red-500" : "border-gray-300"}`}

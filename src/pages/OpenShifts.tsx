@@ -158,29 +158,29 @@ export default function OpenShifts() {
       toast.error("Something went wrong. Please try again.");
     }
   };  
-  // // Handle approving the change
-  // const handleApproveChange = async (actionId: number) => {
-  //   try {
-  //     const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
-  //       method: "PUT",
-  //     });
+  // Handle approving the change
+  const handleApproveChange = async (actionId: number) => {
+    try {
+      const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
+        method: "PUT",
+      });
 
-  //     const data = await response.json();
-  //     if (!response.ok) {
-  //       throw new Error(data.message || "Failed to approve change");
-  //     }
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to approve change");
+      }
 
-  //     console.log("Change approved successfully:", data);
-  //     // Optionally, update the UI
-  //     setActionLogs((prev) =>
-  //       prev.map((log) =>
-  //         log.id === actionId ? { ...log, status: "approved" } : log
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.error("Error approving change:", error);
-  //   }
-  // };
+      console.log("Change approved successfully:", data);
+      // Optionally, update the UI
+      setActionLogs((prev) =>
+        prev.map((log) =>
+          log.id === actionId ? { ...log, status: "approved" } : log
+        )
+      );
+    } catch (error) {
+      console.error("Error approving change:", error);
+    }
+  };
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";

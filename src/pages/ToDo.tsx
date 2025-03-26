@@ -20,7 +20,7 @@ const ToDo: React.FC = () => {
 
   const fetchLogs = async () => {
     try {
-      const response = await axios.get("/api/action-logs");
+      const response = await axios.get("http://localhost:4000/action-logs");
       setLogs(response.data.filter((log: ActionLog) => log.status === "pending")); // Show only pending
     } catch (error) {
       console.error("Error fetching logs:", error);
@@ -29,7 +29,7 @@ const ToDo: React.FC = () => {
 
   const handleApprove = async (id: number) => {
     try {
-      await axios.put(`/api/action-logs/${id}/approve`);
+      await axios.put(`/action-logs/${id}/approve`);
       fetchLogs(); // Refresh after approving
     } catch (error) {
       console.error("Error approving log:", error);
@@ -38,7 +38,7 @@ const ToDo: React.FC = () => {
 
   const handleReject = async (id: number) => {
     try {
-      await axios.put(`/api/action-logs/${id}/reject`);
+      await axios.put(`/action-logs/${id}/reject`);
       fetchLogs(); // Refresh after rejecting
     } catch (error) {
       console.error("Error rejecting log:", error);

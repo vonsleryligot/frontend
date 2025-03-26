@@ -4,26 +4,64 @@ import axios from "axios";
 interface TimesheetEntry {
   id: number;
   user: {
-    fullName: string;
+    firstName: string;
+    lastName: string;
   };
   shift: {
-    timeIn: string;
-    timeOut: string;
+    timeIn: string | null;
+    timeOut: string | null;
   };
   status: string;
 }
 
 const Timesheet: React.FC = () => {
   const [timesheetData, setTimesheetData] = useState<TimesheetEntry[]>([]);
+  const [loadingId, setLoadingId] = useState<number | null>(null);
 
   const fetchTimesheet = async () => {
     try {
-      console.log("Fetching action logs...");
       const response = await axios.get("http://localhost:4000/action-logs");
-      console.log("Response Data:", response.data);
-      setTimesheetData(response.data);
+      console.log("Raw API Response:", response.data);
+      const formattedData = response.data.map((entry: any) => {
+        console.log("Entry Data:", entry); //  Debugging: Check raw entry data
+      
+        // ❗ Corrected: Use `entry.account` instead of `entry.user`
+        const user = entry.account
+          ? { firstName: entry.account.firstName, lastName: entry.account.lastName }
+          : { firstName: "Unknown", lastName: "" };
+      
+        console.log("Mapped User Data:", user); //  Debugging: Check formatted user
+      
+        const timeMatch = entry.details?.match(/Time In - (.*?), Time Out - (.*)/);
+        const timeIn = timeMatch ? timeMatch[1] : null;
+        const timeOut = timeMatch ? timeMatch[2] : null;
+      
+        return {
+          id: entry.id,
+          user,
+          shift: { timeIn, timeOut },
+          status: entry.status || "N/A",
+        };
+      });
+      
+      
+
+      console.log("Formatted Data:", formattedData);
+      setTimesheetData(formattedData);
     } catch (error) {
       console.error("Error fetching timesheet data:", error);
+    }
+  };
+
+  const handleApprove = async (logId: number) => {
+    setLoadingId(logId);
+    try {
+      await axios.put(`http://localhost:4000/action-logs/${logId}/approve`);
+      await fetchTimesheet();
+    } catch (error) {
+      console.error("Error approving shift change:", error);
+    } finally {
+      setLoadingId(null);
     }
   };
 
@@ -33,45 +71,89 @@ const Timesheet: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Timesheet</h2>
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="border p-2">User</th>
-            <th className="border p-2">Time In</th>
-            <th className="border p-2">Time Out</th>
-            <th className="border p-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {timesheetData.length === 0 ? (
+      <h2 className="text-2xl font-bold mb-4 text-gray-700 dark:text-gray-300">Timesheet</h2>
+      {/* Responsive Table Wrapper */}
+      <div className="overflow-x-auto">
+        <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
+          <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
             <tr>
-              <td colSpan={4} className="border p-2 text-center text-gray-500">
-                No timesheet data available.
-              </td>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Employee</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Time In</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Time Out</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Status</th>
+              <th className="border border-gray-300 p-3 text-sm font-semibold">Actions</th>
             </tr>
-          ) : (
-            timesheetData.map((entry) => (
-              <tr key={entry.id} className="text-center">
-                <td className="border p-2">{entry.user?.fullName || "Unknown"}</td>
-                <td className="border p-2">
-                  {entry.shift?.timeIn
-                    ? new Date(entry.shift.timeIn).toLocaleTimeString()
-                    : "N/A"}
+          </thead>
+          <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
+            {timesheetData.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center p-4 text-gray-500">
+                  No timesheet data available.
                 </td>
-                <td className="border p-2">
-                  {entry.shift?.timeOut
-                    ? new Date(entry.shift.timeOut).toLocaleTimeString()
-                    : "N/A"}
-                </td>
-                <td className="border p-2">{entry.status}</td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              timesheetData.map((entry) => (
+                <tr key={entry.id} className="hover:bg-gray-800">
+                  <td className="border border-gray-300 p-3 text-sm">
+                    {entry.user.firstName !== "Unknown"
+                      ? `${entry.user.firstName} ${entry.user.lastName}`
+                      : "Unknown User"}
+                  </td>
+                  <td className="border border-gray-300 p-3 text-sm">
+                    {entry.shift.timeIn ? new Date(entry.shift.timeIn).toLocaleTimeString() : "N/A"}
+                  </td>
+                  <td className="border border-gray-300 p-3 text-sm">
+                    {entry.shift.timeOut ? new Date(entry.shift.timeOut).toLocaleTimeString() : "N/A"}
+                  </td>
+                  <td className="border border-gray-300 p-3 text-sm">
+                    {entry.status || "N/A"}
+                  </td>
+                  <td className="border border-gray-300 p-3 text-sm">
+                    {entry.status === "pending" ? (
+                      <button
+                        className={`bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center justify-center gap-2 ${
+                          loadingId === entry.id ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        onClick={() => handleApprove(entry.id)}
+                        disabled={loadingId === entry.id}
+                      >
+                        {loadingId === entry.id ? (
+                          <svg
+                            className="animate-spin h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"
+                            ></path>
+                          </svg>
+                        ) : (
+                          "Approve"
+                        )}
+                      </button>
+                    ) : (
+                      <span className="text-gray-500">Approved</span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  );
+  );  
 };
 
 export default Timesheet;

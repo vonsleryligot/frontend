@@ -81,22 +81,6 @@ const AppHeader: React.FC = () => {
             )}
             {/* Cross Icon */}
           </button>
-
-          {/* <div className="hidden lg:flex">
-            <Link to="/" className="w-auto max-w-[120px]">
-              <img
-                className="dark:hidden w-full h-auto"
-                src="./images/logo/logo.png"
-                alt="Logo"
-              />
-              <img
-                className="hidden dark:block w-full h-auto"
-                src="./images/logo/logo-dark.png"
-                alt="Logo"
-              />
-            </Link>
-          </div> */}
-
           <button
             onClick={toggleApplicationMenu}
             className="flex items-center justify-center w-10 h-10 text-gray-700 rounded-lg z-99999 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
