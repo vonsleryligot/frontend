@@ -11,6 +11,7 @@ interface User {
   country: string;
   city: string;
   postalCode: string;
+  loading: boolean; // Add loading here
 }
 
 interface AuthContextType {

@@ -20,6 +20,10 @@ import Timesheet from "./pages/Timesheet";
 // import ViewUserProfile from "./pages/ViewUserProfile";
 import { ShiftProvider } from "./pages/ShiftContext"; 
 import { AuthProvider } from "./context/AuthContext"; 
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
+<ToastContainer />
 
 export default function App() {
   return (

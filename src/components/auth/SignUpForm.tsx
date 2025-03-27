@@ -17,6 +17,7 @@ export default function SignUpForm() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
@@ -54,6 +55,24 @@ export default function SignUpForm() {
         .catch((error) => console.error("Error fetching cities:", error));
     }
   }, [country]);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (confirmPassword && e.target.value !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+    } else {
+      setPasswordError("");
+    }
+  };
+  
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmPassword(e.target.value);
+    if (password && e.target.value !== password) {
+      setPasswordError("Passwords do not match");
+    } else {
+      setPasswordError("");
+    }
+  };
 
   useEffect(() => {
     if (country && city) {
@@ -174,22 +193,43 @@ export default function SignUpForm() {
                   <div>
                     <Label>Password<span className="text-error-500">*</span></Label>
                     <div className="relative">
-                      <Input type={showPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} aria-required="true" />
-                      <span onClick={() => setShowPassword(!showPassword)} className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2">
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Enter your password" 
+                        value={password} 
+                        onChange={handlePasswordChange} 
+                        aria-required="true" 
+                      />
+                      <span 
+                        onClick={() => setShowPassword(!showPassword)} 
+                        className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                      >
                         {showPassword ? <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
                       </span>
                     </div>
                   </div>
+
                   {/* Confirm Password */}
                   <div>
                     <Label>Confirm Password<span className="text-error-500">*</span></Label>
                     <div className="relative">
-                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} aria-required="true" />
-                      <span onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2">
+                      <Input 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        placeholder="Confirm your password" 
+                        value={confirmPassword} 
+                        onChange={handleConfirmPasswordChange} 
+                        aria-required="true" 
+                      />
+                      <span 
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                        className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
+                      >
                         {showConfirmPassword ? <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
                       </span>
                     </div>
                   </div>
+                  {/* Error Message */}
+                  {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
                   <button type="button" onClick={handleNext} className="w-full bg-brand-500 text-white rounded-lg py-3">
                     Next
                   </button>

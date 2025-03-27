@@ -20,7 +20,7 @@ const ToDo: React.FC = () => {
 
   const fetchLogs = async () => {
     try {
-      const response = await axios.get("http://localhost:4000/action-logs");
+      const response = await axios.get("http://localhost/action-logs");
       setLogs(response.data.filter((log: ActionLog) => log.status === "pending")); // Show only pending
     } catch (error) {
       console.error("Error fetching logs:", error);

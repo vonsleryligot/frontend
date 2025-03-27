@@ -23,19 +23,14 @@ const Timesheet: React.FC = () => {
       const response = await axios.get("http://localhost:4000/action-logs");
       console.log("Raw API Response:", response.data);
       const formattedData = response.data.map((entry: any) => {
-        console.log("Entry Data:", entry); //  Debugging: Check raw entry data
-      
-        // ❗ Corrected: Use `entry.account` instead of `entry.user`
         const user = entry.account
           ? { firstName: entry.account.firstName, lastName: entry.account.lastName }
           : { firstName: "Unknown", lastName: "" };
-      
-        console.log("Mapped User Data:", user); //  Debugging: Check formatted user
-      
+
         const timeMatch = entry.details?.match(/Time In - (.*?), Time Out - (.*)/);
         const timeIn = timeMatch ? timeMatch[1] : null;
         const timeOut = timeMatch ? timeMatch[2] : null;
-      
+
         return {
           id: entry.id,
           user,
@@ -43,10 +38,7 @@ const Timesheet: React.FC = () => {
           status: entry.status || "N/A",
         };
       });
-      
-      
 
-      console.log("Formatted Data:", formattedData);
       setTimesheetData(formattedData);
     } catch (error) {
       console.error("Error fetching timesheet data:", error);
@@ -60,6 +52,18 @@ const Timesheet: React.FC = () => {
       await fetchTimesheet();
     } catch (error) {
       console.error("Error approving shift change:", error);
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleReject = async (logId: number) => {
+    setLoadingId(logId);
+    try {
+      await axios.put(`http://localhost:4000/action-logs/${logId}/reject`);
+      await fetchTimesheet();
+    } catch (error) {
+      console.error("Error rejecting shift change:", error);
     } finally {
       setLoadingId(null);
     }
@@ -110,38 +114,72 @@ const Timesheet: React.FC = () => {
                   </td>
                   <td className="border border-gray-300 p-3 text-sm">
                     {entry.status === "pending" ? (
-                      <button
-                        className={`bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center justify-center gap-2 ${
-                          loadingId === entry.id ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                        onClick={() => handleApprove(entry.id)}
-                        disabled={loadingId === entry.id}
-                      >
-                        {loadingId === entry.id ? (
-                          <svg
-                            className="animate-spin h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"
-                            ></path>
-                          </svg>
-                        ) : (
-                          "Approve"
-                        )}
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          className={`bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 flex items-center justify-center ${
+                            loadingId === entry.id ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                          onClick={() => handleApprove(entry.id)}
+                          disabled={loadingId === entry.id}
+                        >
+                          {loadingId === entry.id ? (
+                            <svg
+                              className="animate-spin h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"
+                              ></path>
+                            </svg>
+                          ) : (
+                            "Approve"
+                          )}
+                        </button>
+                        <button
+                          className={`bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 flex items-center justify-center ${
+                            loadingId === entry.id ? "opacity-50 cursor-not-allowed" : ""
+                          }`}
+                          onClick={() => handleReject(entry.id)}
+                          disabled={loadingId === entry.id}
+                        >
+                          {loadingId === entry.id ? (
+                            <svg
+                              className="animate-spin h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"
+                              ></path>
+                            </svg>
+                          ) : (
+                            "Reject"
+                          )}
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-gray-500">Approved</span>
                     )}
@@ -153,7 +191,7 @@ const Timesheet: React.FC = () => {
         </table>
       </div>
     </div>
-  );  
+  );
 };
 
 export default Timesheet;

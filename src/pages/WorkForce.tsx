@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import AddEmployee from "./AddEmployee";
+import AddEmployee from "./AddAccount";
 import { Eye } from "lucide-react";
 
 interface Employee {

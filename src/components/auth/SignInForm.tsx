@@ -9,7 +9,7 @@ import { signIn } from "../../api";
 import { useAuth } from "../../context/AuthContext"; // Import Auth Context
 
 export default function SignInForm() {
-  const { login } = useAuth(); // ✅ Get login function from context
+  const { login } = useAuth(); //  Get login function from context
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +38,7 @@ export default function SignInForm() {
   
       if (jwtToken) {
         login(user, jwtToken);
- // ✅ Use context function to update auth state
+ //  Use context function to update auth state
         navigate("/dashboard", { replace: true }); // Redirect after login
       } else {
         setError("Authentication failed, please try again.");
