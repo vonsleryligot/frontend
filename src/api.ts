@@ -46,6 +46,7 @@ export const signUp = async (data: {
   title: string;
   firstName: string;
   lastName: string;
+  deparment: string;
   email: string;
   phone: string;
   password: string;

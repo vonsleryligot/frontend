@@ -17,6 +17,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
     lastName: "",
     phone: "",
     role: "",
+    department: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -232,6 +233,21 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
               {roles.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
+            </select>
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="font-semibold">Department</label>
+              <select
+                name="department"
+                value={newAccount.department}
+                onChange={handleInputChange}
+                className="border p-2 w-full"
+                >
+                <option value="">Select Department</option>
+                <option value="Accountant">Accountant</option>
+                <option value="IT">IT</option>
+                <option value="Associate">Associate</option>
             </select>
           </div>
 

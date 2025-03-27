@@ -13,6 +13,7 @@ export default function SignUpForm() {
   const [title, setTitle] = useState("Mr.");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [department, setDepartment] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +28,7 @@ export default function SignUpForm() {
   const [countries, setCountries] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [postalCodes, setPostalCodes] = useState<string[]>([]);
+  
   
   const navigate = useNavigate();
 
@@ -91,7 +93,7 @@ export default function SignUpForm() {
     setError("");
 
     if (step === 1) {
-      if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
+      if (!firstName || !lastName || !department || !email || !phone || !password || !confirmPassword) {
         setError("All fields are required");
         return;
       }
@@ -121,6 +123,7 @@ export default function SignUpForm() {
         title,
         firstName,
         lastName,
+        department,
         email,
         phone,
         password,
@@ -162,7 +165,7 @@ export default function SignUpForm() {
                     <select
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full p-2 border rounded-lgtext-gray-500 dark:text-gray-400"
+                      className="w-full p-2 border rounded-lg text-gray-500 dark:text-gray-400"
                     >
                       <option value="Mr.">Mr.</option>
                       <option value="Ms.">Ms.</option>
@@ -179,6 +182,21 @@ export default function SignUpForm() {
                     <Label>Last Name<span className="text-error-500">*</span></Label>
                     <Input type="text" placeholder="Enter your last name" value={lastName} onChange={(e) => setLastName(capitalizeFirstLetter(e.target.value))} aria-required="true" />
                   </div>
+                  {/* Department */}
+                  <div>
+                    <Label>Department<span className="text-error-500">*</span></Label>
+                    <select
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="w-full p-2 border rounded-lg text-gray-500 dark:text-gray-400"
+                      aria-required="true"
+                    >
+                      <option value="" disabled>-- Select Department --</option>
+                      <option value="Accountant">Accountant</option>
+                      <option value="IT">IT</option>
+                      <option value="Associate">Associate</option>
+                    </select>
+                  </div>
                   {/* Email */}
                   <div>
                     <Label>Email<span className="text-error-500">*</span></Label>
@@ -187,7 +205,7 @@ export default function SignUpForm() {
                   {/* Phone */}
                   <div>
                     <Label>Phone<span className="text-error-500">*</span></Label>
-                    <Input type="email" placeholder="Enter your email" value={phone} onChange={(e) => setPhone(e.target.value)} aria-required="true" />
+                    <Input type="tel" placeholder="Enter your phone" value={phone} onChange={(e) => setPhone(e.target.value)} aria-required="true" />
                   </div>
                   {/* Password */}
                   <div>

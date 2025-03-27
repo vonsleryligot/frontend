@@ -103,7 +103,7 @@ const WorkForce = () => {
       <AddEmployee 
         showModal={showModal} 
         setShowModal={setShowModal} 
-        onAddEmployee={fetchEmployee} 
+        onAddAccount={fetchEmployee} 
       />
   
       {error && <p className="text-red-500 mb-4">{error}</p>}
