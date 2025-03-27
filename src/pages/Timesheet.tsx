@@ -45,10 +45,11 @@ const Timesheet: React.FC = () => {
     }
   };
 
-  const handleApprove = async (logId: number) => {
-    setLoadingId(logId);
+  const handleApprove = async (id: number) => {
+    setLoadingId(id);
     try {
-      await axios.put(`http://localhost:4000/action-logs/${logId}/approve`);
+      await axios.put(`http://localhost:4000/action-logs/${id}/approve`);
+
       await fetchTimesheet();
     } catch (error) {
       console.error("Error approving shift change:", error);
@@ -57,10 +58,10 @@ const Timesheet: React.FC = () => {
     }
   };
 
-  const handleReject = async (logId: number) => {
-    setLoadingId(logId);
+  const handleReject = async (id: number) => {
+    setLoadingId(id);
     try {
-      await axios.put(`http://localhost:4000/action-logs/${logId}/reject`);
+      await axios.put(`http://localhost:4000/action-logs/${id}/reject`);
       await fetchTimesheet();
     } catch (error) {
       console.error("Error rejecting shift change:", error);
@@ -76,6 +77,7 @@ const Timesheet: React.FC = () => {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4 text-gray-700 dark:text-gray-300">Timesheet</h2>
+  
       {/* Responsive Table Wrapper */}
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
@@ -180,8 +182,12 @@ const Timesheet: React.FC = () => {
                           )}
                         </button>
                       </div>
+                    ) : entry.status === "approved" ? (
+                      <span className="text-green-600 font-medium">Approved</span>
+                    ) : entry.status === "rejected" ? (
+                      <span className="text-red-600 font-medium">Rejected</span>
                     ) : (
-                      <span className="text-gray-500">Approved</span>
+                      <span className="text-gray-500">Unknown</span>
                     )}
                   </td>
                 </tr>
@@ -192,6 +198,7 @@ const Timesheet: React.FC = () => {
       </div>
     </div>
   );
+  
 };
 
 export default Timesheet;

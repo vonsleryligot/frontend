@@ -10,7 +10,7 @@ interface User {
   phone: number;
   country: string;
   city: string;
-  postalCode: string;
+  postalCode: number;
   loading: boolean; // Add loading here
 }
 

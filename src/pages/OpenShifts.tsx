@@ -118,12 +118,12 @@ export default function OpenShifts() {
       console.error("No shift selected or ID is missing.");
       return;
     }
-  
+
     try {
       const shiftDate = selectedShift.date;
       const formattedTimeIn = `${shiftDate}T${selectedShift.timeIn}`;
       const formattedTimeOut = `${shiftDate}T${selectedShift.timeOut}`;
-  
+
       const actionLogResponse = await fetch("http://localhost:4000/action-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -135,54 +135,61 @@ export default function OpenShifts() {
           status: "pending",
         }),
       });
-  
+
       const actionLogData = await actionLogResponse.json();
       if (!actionLogResponse.ok) {
         throw new Error(actionLogData.message || "Failed to create action log");
       }
-  
+
       toast.success("Shift update request submitted!", {
         position: "bottom-right",
         autoClose: 3000,
       });
-  
+
       setShifts((prev) =>
         prev.map((shift) =>
           shift.id === selectedShift.id ? { ...shift, status: "pending" } : shift
         )
       );
-  
+
+      // Store the pending status in local storage
+      localStorage.setItem(`shift_${selectedShift.id}_status`, "pending");
+
       setSelectedShift(null);
     } catch (error) {
       console.error("Error creating action log:", error);
       toast.error("Something went wrong. Please try again.");
     }
-  };  
+  };
+
   // Handle approving the change
-const handleApproveChange = async (actionId: number) => {
-  try {
-    const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
-      method: "PUT",
-    });
+  const handleApproveChange = async (actionId: number) => {
+    try {
+      const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
+        method: "PUT",
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to approve change");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to approve change");
+      }
+
+      console.log("Change approved successfully:", data);
+      // Update the OpenShifts table with the new shift details
+      setShifts((prev) =>
+        prev.map((shift) =>
+          shift.id === data.shiftId
+            ? { ...shift, timeIn: data.timeIn, timeOut: data.timeOut, status: "approved" }
+            : shift
+        )
+      );
+
+      // Remove the pending status from local storage
+      localStorage.removeItem(`shift_${data.shiftId}_status`);
+    } catch (error) {
+      console.error("Error approving change:", error);
     }
-
-    console.log("Change approved successfully:", data);
-    // Update the OpenShifts table with the new shift details
-    setShifts((prev) =>
-      prev.map((shift) =>
-        shift.id === actionId
-          ? { ...shift, timeIn: data.timeIn, timeOut: data.timeOut, status: "approved" }
-          : shift
-      )
-    );
-  } catch (error) {
-    console.error("Error approving change:", error);
-  }
-};
+  };
 
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
@@ -213,23 +220,28 @@ const handleApproveChange = async (actionId: number) => {
           </thead>
           <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
             {shifts.length > 0 ? (
-              shifts.map((shift) => (
-                <tr key={shift.id} className="hover:bg-gray-800">
-                  <td className="border border-gray-300 p-3 text-sm">{getUserFullName(shift.userId)}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? parseFloat(shift.totalHours).toFixed(2) : "-"}</td>
-                  <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
-                  <td className="border border-gray-300 p-4 items-center">
-                    {shift.status}
-                    <FaSyncAlt
-                      className="text-blue-500 cursor-pointer ml-2"
-                      onClick={() => setSelectedShift(shift)}
-                    />
-                  </td>
-                </tr>
-              ))
+              shifts.map((shift) => {
+                const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
+                const displayStatus = pendingStatus || shift.status;
+
+                return (
+                  <tr key={shift.id} className="hover:bg-gray-800">
+                    <td className="border border-gray-300 p-3 text-sm">{getUserFullName(shift.userId)}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? parseFloat(shift.totalHours).toFixed(2) : "-"}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
+                    <td className="border border-gray-300 p-4 items-center">
+                      {displayStatus}
+                      <FaSyncAlt
+                        className="text-blue-500 cursor-pointer ml-2"
+                        onClick={() => setSelectedShift(shift)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={8} className="text-center p-4 text-gray-500">

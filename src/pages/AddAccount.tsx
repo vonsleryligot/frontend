@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 interface AddAccountProps {
   showModal: boolean;
@@ -32,20 +34,20 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
       console.error("No authentication token found!");
       return;
     }
-  
+
     try {
       // Debugging: Print raw token
       console.log("Raw JWT Token:", token);
-  
+
       const base64Url = token.split(".")[1];
       if (!base64Url) {
         console.error("Invalid JWT format: Missing payload");
         return;
       }
-  
+
       const decoded = JSON.parse(atob(base64Url));
       console.log("Decoded Token Payload:", decoded);
-  
+
       if (decoded.role) {
         setUserRole(decoded.role);
         console.log("User Role Set:", decoded.role);
@@ -56,7 +58,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
       console.error("Token decoding error:", error);
     }
   }, []);
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setNewAccount((prev) => ({ ...prev, [name]: value }));
@@ -65,7 +67,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
 
   const validateField = (name: string, value: string) => {
     let errorMessage = "";
-  
+
     if (!value.trim()) {
       errorMessage = "This field is required";
     } else {
@@ -79,88 +81,95 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
         errorMessage = "Passwords do not match";
       }
     }
-  
+
     setErrors((prev) => ({ ...prev, [name]: errorMessage }));
   };
-  
+
   const isFormValid = () => {
     const requiredFields = ["title", "firstName", "lastName", "phone", "role", "email", "password", "confirmPassword", "country", "city", "postalCode"];
     const newErrors: { [key: string]: string } = {};
-  
+
     requiredFields.forEach((field) => {
       if (!newAccount[field as keyof typeof newAccount].trim()) {
         newErrors[field] = "This field is required";
       }
     });
-  
+
     if (newAccount.password !== newAccount.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
-  
+
     setErrors(newErrors);
-  
+
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const handleAddAccount = async () => {
     console.log("Submitting Data:", newAccount);
-  
+
     // Validate form
     if (!isFormValid()) {
       console.error("Form has errors!", errors);
       return;
     }
-  
+
     // Get authentication token
     const token = localStorage.getItem("token");
     console.log("Auth Token:", token);
-  
+
     if (!token) {
       console.error("No authentication token found!");
       return;
     }
-  
+
     // Check if user has Admin role
     if (!userRole) {
       console.error("User role is undefined! Check token decoding.");
       return;
     }
-  
+
     console.log("👤 User Role:", userRole);
-  
+
     if (userRole !== "Admin") {
       console.error("Unauthorized: Only admins can create new accounts.");
       return;
     }
-  
+
     try {
       const headers = {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       };
-  
+
       console.log("Request Headers:", headers);
-  
+
       const response = await fetch("http://localhost:4000/accounts", {
         method: "POST",
         headers,
         body: JSON.stringify(newAccount),
       });
-  
+
       if (!response.ok) {
         const errorMessage = await response.text();
         throw new Error(`Failed to add account: ${response.status} - ${errorMessage}`);
       }
-  
+
       const data = await response.json();
       console.log("Account added successfully:", data);
-      
-      onAddAccount(data);
+
       setShowModal(false);
+      toast.success("Added Successfully", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     } catch (error) {
       console.error("Error adding account:", error);
+      toast.error("Failed to add account. Please try again.", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
     }
-  };  
+  };
 
   if (!showModal) return null;
 
@@ -316,6 +325,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
           <button onClick={handleAddAccount} className="px-4 py-2 bg-blue-500 text-white rounded">Add Account</button>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 };
