@@ -150,39 +150,39 @@ export default function OpenShifts() {
     }
   };
 
-  const handleApproveChange = async (actionId: number) => {
-    try {
-      const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
-        method: "PUT",
-      });
+  // const handleApproveChange = async (actionId: number) => {
+  //   try {
+  //     const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
+  //       method: "PUT",
+  //     });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to approve change");
-      }
+  //     const data = await response.json();
+  //     if (!response.ok) {
+  //       throw new Error(data.message || "Failed to approve change");
+  //     }
 
-      setShifts((prev) =>
-        prev.map((shift) =>
-          shift.id === data.shiftId
-            ? { ...shift, timeIn: data.timeIn, timeOut: data.timeOut, status: "approved" }
-            : shift
-        )
-      );
+  //     setShifts((prev) =>
+  //       prev.map((shift) =>
+  //         shift.id === data.shiftId
+  //           ? { ...shift, timeIn: data.timeIn, timeOut: data.timeOut, status: "approved" }
+  //           : shift
+  //       )
+  //     );
 
-      const localKey = `shift_${data.shiftId}_status`;
-      if (localStorage.getItem(localKey) === "pending") {
-        localStorage.removeItem(localKey);
-      }
+  //     const localKey = `shift_${data.shiftId}_status`;
+  //     if (localStorage.getItem(localKey) === "pending") {
+  //       localStorage.removeItem(localKey);
+  //     }
 
-      setActionLogs((prev) =>
-        prev.map((log) =>
-          log.id === actionId ? { ...log, status: "approved" } : log
-        )
-      );
-    } catch (error) {
-      console.error("Error approving change:", error);
-    }
-  };
+  //     setActionLogs((prev) =>
+  //       prev.map((log) =>
+  //         log.id === actionId ? { ...log, status: "approved" } : log
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error("Error approving change:", error);
+  //   }
+  // };
 
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
@@ -222,7 +222,7 @@ export default function OpenShifts() {
                     <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours || "-"}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
                     <td className="border border-gray-300 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
                     <td className="border border-gray-300 p-3 text-sm">
@@ -291,47 +291,6 @@ export default function OpenShifts() {
           </div>
         </div>
       )}
-
-      {/* Pending Approvals Table */}
-      {userId === 1 && (
-        <div className="mt-10">
-          <h3 className="text-lg font-semibold mb-4">Pending Approvals</h3>
-          <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
-            <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
-              <tr>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Employee</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Time In</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Time Out</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Status</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
-              {actionLogs
-                .filter((log) => log.status === "pending")
-                .map((log) => (
-                  <tr key={log.id}>
-                    <td className="border border-gray-300 p-3 text-sm">
-                      {getUserFullName(log.userId)}
-                    </td>
-                    <td className="border border-gray-300 p-3 text-sm">{formatTime(log.timeIn)}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{formatTime(log.timeOut)}</td>
-                    <td className="border border-gray-300 p-3 text-sm capitalize">{log.status}</td>
-                    <td className="border border-gray-300 p-3 text-sm">
-                      <button
-                        onClick={() => handleApproveChange(log.id)}
-                        className="text-green-600 hover:underline"
-                      >
-                        Approve
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       <ToastContainer />
     </div>
   );
