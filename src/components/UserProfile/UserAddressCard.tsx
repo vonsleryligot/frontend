@@ -17,18 +17,18 @@ export default function UserInfoCard() {
     postalCode: "",
   });
 
-  // Populate form fields when `user` data changes
-useEffect(() => {
-  console.log(" User state changed:", user); // Log every user state change
-  if (user) {
-    setFormData((prev) => ({
-      ...prev,
-      country: user.country || "",
-      city: user.city || "",
-      postalCode: user.postalCode || "",
-    }));
-  }
-}, [user]);
+  useEffect(() => {
+    console.log("User state changed:", user); // Log every user state change
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        country: user.country || "",
+        city: user.city || "",
+        postalCode: String(user.postalCode || ""), // Ensure postalCode is always a string
+      }));
+    }
+  }, [user]);
+  
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

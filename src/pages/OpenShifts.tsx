@@ -155,12 +155,13 @@ export default function OpenShifts() {
       const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
         method: "PUT",
       });
-
+  
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.message || "Failed to approve change");
       }
-
+  
+      // Update shift with the new status 'approved'
       setShifts((prev) =>
         prev.map((shift) =>
           shift.id === data.shiftId
@@ -168,12 +169,14 @@ export default function OpenShifts() {
             : shift
         )
       );
-
+  
+      // Remove the pending status from local storage
       const localKey = `shift_${data.shiftId}_status`;
       if (localStorage.getItem(localKey) === "pending") {
         localStorage.removeItem(localKey);
       }
-
+  
+      // Update action logs with approved status
       setActionLogs((prev) =>
         prev.map((log) =>
           log.id === actionId ? { ...log, status: "approved" } : log
@@ -183,6 +186,7 @@ export default function OpenShifts() {
       console.error("Error approving change:", error);
     }
   };
+  
 
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
@@ -295,17 +299,6 @@ export default function OpenShifts() {
       {/* Pending Approvals Table */}
       {userId === 1 && (
         <div className="mt-10">
-          <h3 className="text-lg font-semibold mb-4">Pending Approvals</h3>
-          <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
-            <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
-              <tr>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Employee</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Time In</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Time Out</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Status</th>
-                <th className="border border-gray-300 p-3 text-sm font-semibold">Actions</th>
-              </tr>
-            </thead>
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {actionLogs
                 .filter((log) => log.status === "pending")
@@ -328,10 +321,9 @@ export default function OpenShifts() {
                   </tr>
                 ))}
             </tbody>
-          </table>
+       
         </div>
       )}
-
       <ToastContainer />
     </div>
   );
