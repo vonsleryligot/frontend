@@ -10,6 +10,8 @@ interface TimesheetEntry {
   shift: {
     timeIn: string | null;
     timeOut: string | null;
+    timeInImage: string | null;  // URL for Time In Image
+    timeOutImage: string | null; // URL for Time Out Image
   };
   status: string;
 }
@@ -17,6 +19,8 @@ interface TimesheetEntry {
 const Timesheet: React.FC = () => {
   const [timesheetData, setTimesheetData] = useState<TimesheetEntry[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [hoveredTimeIn, setHoveredTimeIn] = useState<string | null>(null);
+  const [hoveredTimeOut, setHoveredTimeOut] = useState<string | null>(null);
 
   const fetchTimesheet = async () => {
     try {
@@ -31,10 +35,14 @@ const Timesheet: React.FC = () => {
         const timeIn = timeMatch ? timeMatch[1] : null;
         const timeOut = timeMatch ? timeMatch[2] : null;
 
+        // Assuming your database returns timeInImage and timeOutImage URLs
+        const timeInImage = entry.timeInImage || null;  // Image URL for Time In
+        const timeOutImage = entry.timeOutImage || null;  // Image URL for Time Out
+
         return {
           id: entry.id,
           user,
-          shift: { timeIn, timeOut },
+          shift: { timeIn, timeOut, timeInImage, timeOutImage },
           status: entry.status || "N/A",
         };
       });
@@ -49,7 +57,6 @@ const Timesheet: React.FC = () => {
     setLoadingId(id);
     try {
       await axios.put(`http://localhost:4000/action-logs/${id}/approve`);
-
       await fetchTimesheet();
     } catch (error) {
       console.error("Error approving shift change:", error);
@@ -77,7 +84,7 @@ const Timesheet: React.FC = () => {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-4 text-gray-700 dark:text-gray-300">Timesheet</h2>
-  
+
       {/* Responsive Table Wrapper */}
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
@@ -105,11 +112,29 @@ const Timesheet: React.FC = () => {
                       ? `${entry.user.firstName} ${entry.user.lastName}`
                       : "Unknown User"}
                   </td>
-                  <td className="border border-gray-300 p-3 text-sm">
+                  <td
+                    className="border border-gray-300 p-3 text-sm relative"
+                    onMouseEnter={() => setHoveredTimeIn(entry.shift.timeInImage)}
+                    onMouseLeave={() => setHoveredTimeIn(null)}
+                  >
                     {entry.shift.timeIn ? new Date(entry.shift.timeIn).toLocaleTimeString() : "N/A"}
+                    {hoveredTimeIn === entry.shift.timeInImage && entry.shift.timeInImage && (
+                      <div className="image-hover absolute top-0 left-0 mt-2">
+                        <img src={entry.shift.timeInImage} alt="Time In" className="w-32 h-auto" />
+                      </div>
+                    )}
                   </td>
-                  <td className="border border-gray-300 p-3 text-sm">
+                  <td
+                    className="border border-gray-300 p-3 text-sm relative"
+                    onMouseEnter={() => setHoveredTimeOut(entry.shift.timeOutImage)}
+                    onMouseLeave={() => setHoveredTimeOut(null)}
+                  >
                     {entry.shift.timeOut ? new Date(entry.shift.timeOut).toLocaleTimeString() : "N/A"}
+                    {hoveredTimeOut === entry.shift.timeOutImage && entry.shift.timeOutImage && (
+                      <div className="image-hover absolute top-0 left-0 mt-2">
+                        <img src={entry.shift.timeOutImage} alt="Time Out" className="w-32 h-auto" />
+                      </div>
+                    )}
                   </td>
                   <td className="border border-gray-300 p-3 text-sm">
                     {entry.status || "N/A"}
@@ -198,7 +223,6 @@ const Timesheet: React.FC = () => {
       </div>
     </div>
   );
-  
 };
 
 export default Timesheet;
