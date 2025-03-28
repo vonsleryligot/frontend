@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaSyncAlt } from "react-icons/fa"; // Import the circular arrow icon
+import { FaSyncAlt } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -35,8 +35,8 @@ export default function OpenShifts() {
   const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedShift, setSelectedShift] = useState<Shift | null>(null); // For editing
-  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]); // For admin to approve changes
+  const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -83,7 +83,6 @@ export default function OpenShifts() {
     }
   }, [userId]);
 
-  // Fetch action logs for admin approval
   useEffect(() => {
     const fetchActionLogs = async () => {
       try {
@@ -98,26 +97,18 @@ export default function OpenShifts() {
     fetchActionLogs();
   }, []);
 
-  // Function to format time to 12-hour AM/PM format
   const formatTime = (datetime: string) => {
     const date = new Date(datetime);
-    if (isNaN(date.getTime())) {
-      return "12:00 AM"; // Return default value if invalid
-    }
+    if (isNaN(date.getTime())) return "12:00 AM";
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12; // Convert 24-hour time to 12-hour format
-    hours = hours ? hours : 12; // 0 becomes 12
+    hours = hours % 12 || 12;
     return `${hours}:${minutes} ${ampm}`;
   };
 
-  // Handle updating a shift and logging the change for approval
   const handleUpdateShift = async () => {
-    if (!selectedShift || !selectedShift.id) {
-      console.error("No shift selected or ID is missing.");
-      return;
-    }
+    if (!selectedShift || !selectedShift.id) return;
 
     try {
       const shiftDate = selectedShift.date;
@@ -152,9 +143,7 @@ export default function OpenShifts() {
         )
       );
 
-      // Store the pending status in local storage
       localStorage.setItem(`shift_${selectedShift.id}_status`, "pending");
-
       setSelectedShift(null);
     } catch (error) {
       console.error("Error creating action log:", error);
@@ -162,7 +151,6 @@ export default function OpenShifts() {
     }
   };
 
-  // Handle approving the change
   const handleApproveChange = async (actionId: number) => {
     try {
       const response = await fetch(`http://localhost:4000/action-logs/${actionId}/approve`, {
@@ -174,8 +162,6 @@ export default function OpenShifts() {
         throw new Error(data.message || "Failed to approve change");
       }
 
-      console.log("Change approved successfully:", data);
-      // Update the OpenShifts table with the new shift details
       setShifts((prev) =>
         prev.map((shift) =>
           shift.id === data.shiftId
@@ -184,8 +170,16 @@ export default function OpenShifts() {
         )
       );
 
-      // Remove the pending status from local storage
-      localStorage.removeItem(`shift_${data.shiftId}_status`);
+      const localKey = `shift_${data.shiftId}_status`;
+      if (localStorage.getItem(localKey) === "pending") {
+        localStorage.removeItem(localKey);
+      }
+
+      setActionLogs((prev) =>
+        prev.map((log) =>
+          log.id === actionId ? { ...log, status: "approved" } : log
+        )
+      );
     } catch (error) {
       console.error("Error approving change:", error);
     }
@@ -203,7 +197,6 @@ export default function OpenShifts() {
       {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
-      {/* Responsive Table Wrapper */}
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
           <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
@@ -222,7 +215,7 @@ export default function OpenShifts() {
             {shifts.length > 0 ? (
               shifts.map((shift) => {
                 const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
-                const displayStatus = pendingStatus || shift.status;
+                const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
 
                 return (
                   <tr key={shift.id} className="hover:bg-gray-800">
@@ -230,22 +223,24 @@ export default function OpenShifts() {
                     <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? parseFloat(shift.totalHours).toFixed(2) : "-"}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours || "-"}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
-                    <td className="border border-gray-300 p-4 items-center">
-                      {displayStatus}
-                      <FaSyncAlt
-                        className="text-blue-500 cursor-pointer ml-2"
+                    <td className="border border-gray-300 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
+                    <td className="border border-gray-300 p-3 text-sm">
+                      <button
+                        className="text-blue-600 hover:underline mr-2"
                         onClick={() => setSelectedShift(shift)}
-                      />
+                      >
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={8} className="text-center p-4 text-gray-500">
-                  No open shifts found.
+                <td colSpan={8} className="text-center p-4">
+                  No shifts found.
                 </td>
               </tr>
             )}
@@ -253,55 +248,92 @@ export default function OpenShifts() {
         </table>
       </div>
 
-      {/* Edit Shift Modal */}
+      {/* Shift Edit Modal */}
       {selectedShift && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 p-4">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full relative text-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 dark:bg-gray-800">
-            {/* Close Button */}
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              onClick={() => setSelectedShift(null)}
-            >
-              ✕
-            </button>
-
-            <h2 className="text-xl font-semibold mb-4">Update Shift</h2>
-
-            <div className="mb-4">
-              <label htmlFor="timeIn" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Time In
-              </label>
+        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40 flex items-center justify-center">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-sm w-full text-sm">
+            <h3 className="text-lg font-semibold mb-4">Edit Shift</h3>
+            <label className="block mb-2">
+              Time In:
               <input
                 type="time"
-                id="timeIn"
+                className="w-full border p-2 mt-1 text-sm"
                 value={selectedShift.timeIn || ""}
-                onChange={(e) => setSelectedShift({ ...selectedShift, timeIn: e.target.value })}
-                className="w-full mt-1 p-2 border border-gray-300 rounded"
+                onChange={(e) =>
+                  setSelectedShift({ ...selectedShift, timeIn: e.target.value })
+                }
               />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="timeOut" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Time Out
-              </label>
+            </label>
+            <label className="block mb-4">
+              Time Out:
               <input
                 type="time"
-                id="timeOut"
+                className="w-full border p-2 mt-1 text-sm"
                 value={selectedShift.timeOut || ""}
-                onChange={(e) => setSelectedShift({ ...selectedShift, timeOut: e.target.value })}
-                className="w-full mt-1 p-2 border border-gray-300 rounded"
+                onChange={(e) =>
+                  setSelectedShift({ ...selectedShift, timeOut: e.target.value })
+                }
               />
+            </label>
+            <div className="flex justify-end">
+              <button
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mr-2"
+                onClick={() => setSelectedShift(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+                onClick={handleUpdateShift}
+              >
+                Submit
+              </button>
             </div>
-
-            <button
-              onClick={handleUpdateShift}
-              className="w-full py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Update Shift
-            </button>
           </div>
         </div>
       )}
+
+      {/* Pending Approvals Table */}
+      {userId === 1 && (
+        <div className="mt-10">
+          <h3 className="text-lg font-semibold mb-4">Pending Approvals</h3>
+          <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
+            <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
+              <tr>
+                <th className="border border-gray-300 p-3 text-sm font-semibold">Employee</th>
+                <th className="border border-gray-300 p-3 text-sm font-semibold">Time In</th>
+                <th className="border border-gray-300 p-3 text-sm font-semibold">Time Out</th>
+                <th className="border border-gray-300 p-3 text-sm font-semibold">Status</th>
+                <th className="border border-gray-300 p-3 text-sm font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
+              {actionLogs
+                .filter((log) => log.status === "pending")
+                .map((log) => (
+                  <tr key={log.id}>
+                    <td className="border border-gray-300 p-3 text-sm">
+                      {getUserFullName(log.userId)}
+                    </td>
+                    <td className="border border-gray-300 p-3 text-sm">{formatTime(log.timeIn)}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{formatTime(log.timeOut)}</td>
+                    <td className="border border-gray-300 p-3 text-sm capitalize">{log.status}</td>
+                    <td className="border border-gray-300 p-3 text-sm">
+                      <button
+                        onClick={() => handleApproveChange(log.id)}
+                        className="text-green-600 hover:underline"
+                      >
+                        Approve
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <ToastContainer />
     </div>
   );
 }
