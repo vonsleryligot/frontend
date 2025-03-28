@@ -143,7 +143,6 @@ export default function OpenShifts() {
         )
       );
 
-      localStorage.setItem(`shift_${selectedShift.id}_status`, "pending");
       setSelectedShift(null);
     } catch (error) {
       console.error("Error creating action log:", error);
@@ -223,7 +222,7 @@ export default function OpenShifts() {
                     <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours || "-"}</td>
+                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? parseFloat(shift.totalHours).toFixed(2) : "-"}</td>
                     <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
                     <td className="border border-gray-300 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
                     <td className="border border-gray-300 p-3 text-sm">
