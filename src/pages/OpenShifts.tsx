@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-// import { FaSyncAlt } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import PageBreadcrumb from "../components/common/PageBreadCrumb";
 
 interface Shift {
   id: number;
@@ -26,7 +26,7 @@ interface ActionLog {
   userId: number;
   timeIn: string;
   timeOut: string;
-  status: string; // 'pending' or 'approved'
+  status: string;
 }
 
 export default function OpenShifts() {
@@ -37,6 +37,10 @@ export default function OpenShifts() {
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(7);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -68,8 +72,18 @@ export default function OpenShifts() {
         const response = await fetch("http://localhost:4000/attendances");
         if (!response.ok) throw new Error("Failed to fetch attendance records");
         const data: Shift[] = await response.json();
-        const filteredShifts = userId === 1 ? data : data.filter((shift) => shift.userId === userId);
-        setShifts(filteredShifts);
+
+        // Sort the shifts based on timeIn (descending order) and handle null timeIn values at the bottom
+        const sortedShifts = data
+          .filter((shift) => userId === 1 || shift.userId === userId) // Filter by userId if needed
+          .sort((a, b) => {
+            if (a.timeIn && b.timeIn) {
+              return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort by timeIn descending
+            }
+            return a.timeIn ? -1 : 1; // If timeIn is null, treat as older
+          });
+
+        setShifts(sortedShifts);
       } catch (error) {
         setError("Error fetching attendance records.");
         console.error("Error fetching attendance:", error);
@@ -155,109 +169,143 @@ export default function OpenShifts() {
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
   };
 
+  // Pagination Logic
+  const indexOfLastShift = currentPage * itemsPerPage;
+  const indexOfFirstShift = indexOfLastShift - itemsPerPage;
+  const currentShifts = shifts.slice(indexOfFirstShift, indexOfLastShift);
+
+  const totalPages = Math.ceil(shifts.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md dark:border-gray-800 dark:bg-white/[0.03] text-sm text-gray-700 dark:text-gray-200">
-      <h2 className="text-xl font-semibold mb-4">Open Shifts</h2>
+    <>
+      <PageBreadcrumb pageTitle="Open Shift Logs" />
+      <div className="p-6  rounded-lg shadow-md dark:border-gray-00 border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+        {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
+        {error && <p className="text-center text-red-500">{error}</p>}
 
-      {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
-      {error && <p className="text-center text-red-500">{error}</p>}
-
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
-          <thead className="bg-gray-100 dark:text-gray-300 dark:bg-white/[0.03]">
-            <tr>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Employee</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Date</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Time In</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Time Out</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Total Hours</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Shifts</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Status</th>
-              <th className="border border-gray-300 p-3 text-sm font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
-            {shifts.length > 0 ? (
-              shifts.map((shift) => {
-                const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
-                const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
-
-                return (
-                  <tr key={shift.id} className="hover:bg-gray-800">
-                    <td className="border border-gray-300 p-3 text-sm">{getUserFullName(shift.userId)}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.date}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                    <td className="border border-gray-300 p-3 text-sm">{shift.shifts}</td>
-                    <td className="border border-gray-300 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
-                    <td className="border border-gray-300 p-3 text-sm">
-                      <button
-                        className="text-blue-600 hover:underline mr-2"
-                        onClick={() => setSelectedShift(shift)}
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
+            <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
-                <td colSpan={8} className="text-center p-4">
-                  No shifts found.
-                </td>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Date</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time In</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Total Hours</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Shifts</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Status</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
+              {currentShifts.length > 0 ? (
+                currentShifts.map((shift) => {
+                  const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
+                  const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
 
-      {/* Shift Edit Modal */}
-      {selectedShift && (
-        <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40 flex items-center justify-center">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-sm w-full text-sm">
-            <h3 className="text-lg font-semibold mb-4">Edit Shift</h3>
-            <label className="block mb-2">
-              Time In:
-              <input
-                type="time"
-                className="w-full border p-2 mt-1 text-sm"
-                value={selectedShift.timeIn || ""}
-                onChange={(e) =>
-                  setSelectedShift({ ...selectedShift, timeIn: e.target.value })
-                }
-              />
-            </label>
-            <label className="block mb-4">
-              Time Out:
-              <input
-                type="time"
-                className="w-full border p-2 mt-1 text-sm"
-                value={selectedShift.timeOut || ""}
-                onChange={(e) =>
-                  setSelectedShift({ ...selectedShift, timeOut: e.target.value })
-                }
-              />
-            </label>
-            <div className="flex justify-end">
-              <button
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded mr-2"
-                onClick={() => setSelectedShift(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
-                onClick={handleUpdateShift}
-              >
-                Submit
-              </button>
+                  return (
+                    <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.shifts}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                        <button
+                          className="text-blue-600 hover:underline mr-2"
+                          onClick={() => setSelectedShift(shift)}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="text-center p-4">
+                    No shifts found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-4">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+          >
+            Previous
+          </button>
+          <div className="text-sm">
+            Page {currentPage} of {totalPages}
+          </div>
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
+          >
+            Next
+          </button>
+        </div>
+
+        {/* Shift Edit Modal */}
+        {selectedShift && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-sm w-full text-sm">
+              <h3 className="text-lg font-semibold mb-4">Edit Shift</h3>
+              <label className="block mb-2">
+                Time In:
+                <input
+                  type="time"
+                  className="w-full border p-2 mt-1 text-sm"
+                  value={selectedShift.timeIn || ""}
+                  onChange={(e) =>
+                    setSelectedShift({ ...selectedShift, timeIn: e.target.value })
+                  }
+                />
+              </label>
+              <label className="block mb-2">
+                Time Out:
+                <input
+                  type="time"
+                  className="w-full border p-2 mt-1 text-sm"
+                  value={selectedShift.timeOut || ""}
+                  onChange={(e) =>
+                    setSelectedShift({ ...selectedShift, timeOut: e.target.value })
+                  }
+                />
+              </label>
+              <div className="flex justify-end mt-4">
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={handleUpdateShift}
+                >
+                  Submit
+                </button>
+                <button
+                  className="ml-2 bg-gray-400 text-white px-4 py-2 rounded"
+                  onClick={() => setSelectedShift(null)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      <ToastContainer />
-    </div>
+        )}
+
+        <ToastContainer />
+      </div>
+    </>
   );
 }

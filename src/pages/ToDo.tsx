@@ -52,7 +52,7 @@ const ToDo: React.FC = () => {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="To Do" />
+    <PageBreadcrumb pageTitle="To Do" />
     <div className="text-gray-800 dark:text-white/90 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6">
       <h2 className="text-2xl font-bold">ToDo</h2>
 

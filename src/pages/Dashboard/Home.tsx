@@ -1,4 +1,6 @@
 import { useRef, useState, useEffect } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -40,13 +42,6 @@ export default function Home() {
       setDateTime(new Date().toLocaleString());
     }, 1000);
 
-    // Load attendance state from localStorage
-    const storedState = JSON.parse(localStorage.getItem("attendanceState") || "{}");
-    if (storedState.hasTimedIn !== undefined) {
-      setHasTimedIn(storedState.hasTimedIn);
-      setHasTimedOut(storedState.hasTimedOut);
-    }
-
     fetchAttendanceStatus();
 
     return () => {
@@ -66,19 +61,27 @@ export default function Home() {
       if (attendance) {
         setHasTimedIn(true);
         setHasTimedOut(!!attendance.timeOut);
-        localStorage.setItem(
-          "attendanceState",
-          JSON.stringify({ hasTimedIn: true, hasTimedOut: !!attendance.timeOut })
-        );
       } else {
         setHasTimedIn(false);
         setHasTimedOut(false);
-        localStorage.setItem("attendanceState", JSON.stringify({ hasTimedIn: false, hasTimedOut: false }));
       }
+
+      localStorage.setItem(
+        "attendanceStatus",
+        JSON.stringify({ hasTimedIn: !!attendance, hasTimedOut: !!attendance?.timeOut })
+      );
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching attendance status:", err);
     }
   };
+
+  useEffect(() => {
+    const savedStatus = JSON.parse(localStorage.getItem("attendanceStatus") || "{}");
+    if (savedStatus) {
+      setHasTimedIn(savedStatus.hasTimedIn || false);
+      setHasTimedOut(savedStatus.hasTimedOut || false);
+    }
+  }, []);
 
   const captureImage = async () => {
     if (videoRef.current && canvasRef.current) {
@@ -115,20 +118,6 @@ export default function Home() {
     return data.image.image_name;
   };
 
-  const getCurrentShift = () => {
-    const now = new Date();
-    const time = now.getHours() * 60 + now.getMinutes(); // Convert time to minutes for easier comparison
-
-    const shifts = [
-      { name: "Morning", start: 6 * 60, end: 14 * 60 },
-      { name: "Afternoon", start: 14 * 60, end: 22 * 60 },
-      { name: "Night", start: 22 * 60, end: 6 * 60 + 24 * 60 }, 
-    ];
-
-    const shift = shifts.find(s => time >= s.start && time < s.end) || { name: "Open Shift" };
-    return shift.name;
-  };
-
   const handleAttendance = async () => {
     try {
       setIsProcessing(true);
@@ -137,6 +126,7 @@ export default function Home() {
       if (!user || !user.id) throw new Error("User is not logged in.");
 
       const now = new Date();
+      const hours = now.getHours();
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
 
       const imageDataUrl = await captureImage();
@@ -144,7 +134,10 @@ export default function Home() {
 
       const imageFilename = await uploadImage(imageDataUrl, timestamp);
 
-      const shift = getCurrentShift();
+      let shift = "Open Shift";
+      if (hours >= 6 && hours < 14) shift = "Morning";
+      else if (hours >= 14 && hours < 22) shift = "Afternoon";
+      else if (hours >= 22 || hours < 6) shift = "Night";
 
       const res = await fetch("http://localhost:4000/attendances", {
         method: "POST",
@@ -152,29 +145,30 @@ export default function Home() {
         body: JSON.stringify({
           userId: user.id,
           imageId: imageFilename,
-          shifts: shift,
+          shifts: shift, // Gi-balik kay basin needed
           time: now.toISOString(),
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to save attendance");
+      if (!res.ok) {
+        console.error("Failed to save attendance:", await res.text());
+        throw new Error(`Failed to save attendance (Status: ${res.status})`);
+      }
 
-      // Update UI state based on result
       if (!hasTimedIn) {
         setHasTimedIn(true);
         setHasTimedOut(false);
+        localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: true, hasTimedOut: false }));
+        toast.success("Time In success!");
       } else {
         setHasTimedOut(true);
         setHasTimedIn(false);
+        localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: false, hasTimedOut: true }));
+        toast.success("Time Out success!");
       }
-
-      // Save attendance state to localStorage
-      localStorage.setItem(
-        "attendanceState",
-        JSON.stringify({ hasTimedIn: !hasTimedIn, hasTimedOut: hasTimedIn })
-      );
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unexpected error.");
+      toast.error("Error processing attendance.");
     } finally {
       setIsProcessing(false);
     }
@@ -182,10 +176,9 @@ export default function Home() {
 
   return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
+      <ToastContainer position="top-right" style={{ marginTop: "80px" }}/>
       <div className="col-span-12 flex flex-col items-center">
-        <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm text-center">
-          {dateTime}
-        </p>
+        <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm text-center">{dateTime}</p>
 
         <video
           ref={videoRef}
@@ -198,15 +191,9 @@ export default function Home() {
         {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
 
         <div className="mt-4 w-full flex justify-center">
-          {!hasTimedIn || (hasTimedIn && hasTimedOut) ? (
-            <button onClick={handleAttendance} disabled={isProcessing} className="px-6 py-2 bg-blue-500 text-white rounded">
-              {isProcessing ? "Processing..." : "Time In"}
-            </button>
-          ) : (
-            <button onClick={handleAttendance} disabled={isProcessing} className="px-6 py-2 bg-green-500 text-white rounded">
-              {isProcessing ? "Processing..." : "Time Out"}
-            </button>
-          )}
+          <button onClick={handleAttendance} disabled={isProcessing} className="px-6 py-2 bg-blue-500 text-white rounded transition hover:bg-blue-600">
+            {isProcessing ? "Processing..." : hasTimedIn && !hasTimedOut ? "Time Out" : "Time In"}
+          </button>
         </div>
       </div>
     </div>
