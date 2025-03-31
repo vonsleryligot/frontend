@@ -176,32 +176,32 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-opacity-20 z-[999999]">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-screen overflow-auto">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-screen overflow-auto dark:text-gray-300 dark:bg-gray-800">
         <h3 className="text-lg font-bold mb-4">Add Account</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <label className="font-semibold">Title</label>
-            <select
-              name="title"
-              value={newAccount.title}
-              onChange={handleInputChange}
-              className="border p-2 w-full"
-            >
-              <option value="">Select Title</option>
-              <option value="Mr">Mr</option>
-              <option value="Mrs">Mrs</option>
-              <option value="Miss">Miss</option>
-              <option value="Ms">Ms</option>
-            </select>
-          </div>
+        <div className="grid grid-cols-2 gap-4 dark:bg-gray-800">
+        <div className="flex flex-col">
+          <label className="font-semibold dark:text-gray-300">Title</label>
+          <select
+            name="title"
+            value={newAccount.title}
+            onChange={handleInputChange}
+            className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
+          >
+            <option value="">Select Title</option>
+            <option value="Mr">Mr</option>
+            <option value="Mrs">Mrs</option>
+            <option value="Miss">Miss</option>
+            <option value="Ms">Ms</option>
+          </select>
+        </div>
 
           <div className="flex flex-col">
-            <label className="font-semibold">First Name</label>
+            <label className="font-semibold dark:text-gray-300">First Name</label>
             <input
               type="text"
               name="firstName"
               placeholder="First Name"
-              className="border p-2 w-full"
+              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
               value={newAccount.firstName}
               onChange={handleInputChange}
             />
@@ -209,12 +209,12 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
           </div>
 
           <div className="flex flex-col">
-            <label className="font-semibold">Last Name</label>
+            <label className="font-semibold dark:text-gray-300">Last Name</label>
             <input
               type="text"
               name="lastName"
               placeholder="Last Name"
-              className="border p-2 w-full"
+              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
               value={newAccount.lastName}
               onChange={handleInputChange}
             />
@@ -222,12 +222,12 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
           </div>
 
           <div className="flex flex-col">
-            <label className="font-semibold">Role</label>
+            <label className="font-semibold dark:text-gray-300">Role</label>
             <select
               name="role"
               value={newAccount.role}
               onChange={handleInputChange}
-              className="border p-2 w-full"
+              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
             >
               <option value="">Select Role</option>
               {roles.map((option) => (
@@ -237,12 +237,12 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
           </div>
           
           <div className="flex flex-col">
-            <label className="font-semibold">Department</label>
+              <label className="font-semibold dark:text-gray-300">Email</label>
               <select
                 name="department"
                 value={newAccount.department}
                 onChange={handleInputChange}
-                className="border p-2 w-full"
+                className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
                 >
                 <option value="">Select Department</option>
                 <option value="Accountant">Accountant</option>
@@ -251,13 +251,13 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
             </select>
           </div>
 
-          <div className="flex flex-col">
-            <label className="font-semibold">Email</label>
+   <div className="flex flex-col">
+            <label className="font-semibold dark:text-gray-300">Email</label>
             <input
               type="email"
               name="email"
-              placeholder="Email"
-              className="border p-2 w-full"
+               placeholder="Email"
+              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
               value={newAccount.email}
               onChange={handleInputChange}
             />
@@ -312,24 +312,24 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
           </div>
 
           <div className="flex flex-col">
-            <label className="font-semibold">Password</label>
+            <label className="font-semibold dark:text-gray-300">Password</label>
             <input
               type="password"
               name="password"
               placeholder="Password"
-              className="border p-2 w-full"
+              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
               value={newAccount.password}
               onChange={handleInputChange}
             />
           </div>
 
           <div className="flex flex-col">
-            <label className="font-semibold">Confirm Password</label>
+            <label className="font-semibold dark:text-gray-300">Confirm Password</label>
             <input
               type="password"
               name="confirmPassword"
               placeholder="Confirm Password"
-              className="border p-2 w-full"
+              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
               value={newAccount.confirmPassword}
               onChange={handleInputChange}
             />
@@ -337,11 +337,16 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
         </div>
 
         <div className="flex justify-end space-x-2 mt-4">
-          <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-          <button onClick={handleAddAccount} className="px-4 py-2 bg-blue-500 text-white rounded">Add Account</button>
+          <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded">
+            Cancel
+          </button>
+          <button onClick={handleAddAccount} className="px-4 py-2 bg-blue-500 text-white rounded">
+            Add Account
+          </button>
         </div>
       </div>
-      <ToastContainer />
+     {/* Toast Container */}
+     <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar theme="dark" className="dark:bg-gray-900 dark:text-gray-300" />
     </div>
   );
 };

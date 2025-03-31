@@ -40,6 +40,13 @@ export default function Home() {
       setDateTime(new Date().toLocaleString());
     }, 1000);
 
+    // Load attendance state from localStorage
+    const storedState = JSON.parse(localStorage.getItem("attendanceState") || "{}");
+    if (storedState.hasTimedIn !== undefined) {
+      setHasTimedIn(storedState.hasTimedIn);
+      setHasTimedOut(storedState.hasTimedOut);
+    }
+
     fetchAttendanceStatus();
 
     return () => {
@@ -59,9 +66,14 @@ export default function Home() {
       if (attendance) {
         setHasTimedIn(true);
         setHasTimedOut(!!attendance.timeOut);
+        localStorage.setItem(
+          "attendanceState",
+          JSON.stringify({ hasTimedIn: true, hasTimedOut: !!attendance.timeOut })
+        );
       } else {
         setHasTimedIn(false);
         setHasTimedOut(false);
+        localStorage.setItem("attendanceState", JSON.stringify({ hasTimedIn: false, hasTimedOut: false }));
       }
     } catch (err) {
       console.error(err);
@@ -103,6 +115,20 @@ export default function Home() {
     return data.image.image_name;
   };
 
+  const getCurrentShift = () => {
+    const now = new Date();
+    const time = now.getHours() * 60 + now.getMinutes(); // Convert time to minutes for easier comparison
+
+    const shifts = [
+      { name: "Morning", start: 6 * 60, end: 14 * 60 },
+      { name: "Afternoon", start: 14 * 60, end: 22 * 60 },
+      { name: "Night", start: 22 * 60, end: 6 * 60 + 24 * 60 }, 
+    ];
+
+    const shift = shifts.find(s => time >= s.start && time < s.end) || { name: "Open Shift" };
+    return shift.name;
+  };
+
   const handleAttendance = async () => {
     try {
       setIsProcessing(true);
@@ -111,7 +137,6 @@ export default function Home() {
       if (!user || !user.id) throw new Error("User is not logged in.");
 
       const now = new Date();
-      const hours = now.getHours();
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
 
       const imageDataUrl = await captureImage();
@@ -119,10 +144,7 @@ export default function Home() {
 
       const imageFilename = await uploadImage(imageDataUrl, timestamp);
 
-      let shift = "Open Shift";
-      if (hours >= 6 && hours < 14) shift = "Morning";
-      else if (hours >= 14 && hours < 22) shift = "Afternoon";
-      else if (hours >= 22 || hours < 6) shift = "Night";
+      const shift = getCurrentShift();
 
       const res = await fetch("http://localhost:4000/attendances", {
         method: "POST",
@@ -145,6 +167,12 @@ export default function Home() {
         setHasTimedOut(true);
         setHasTimedIn(false);
       }
+
+      // Save attendance state to localStorage
+      localStorage.setItem(
+        "attendanceState",
+        JSON.stringify({ hasTimedIn: !hasTimedIn, hasTimedOut: hasTimedIn })
+      );
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unexpected error.");
     } finally {
@@ -158,7 +186,7 @@ export default function Home() {
         <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm text-center">
           {dateTime}
         </p>
-  
+
         <video
           ref={videoRef}
           autoPlay
@@ -166,39 +194,21 @@ export default function Home() {
           style={{ transform: "scaleX(-1)" }}
         />
         <canvas ref={canvasRef} className="hidden" />
-  
+
         {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
-  
+
         <div className="mt-4 w-full flex justify-center">
-          {(!hasTimedIn || (hasTimedIn && hasTimedOut)) && (
-            <button
-              onClick={handleAttendance}
-              disabled={isProcessing}
-              className={`px-6 py-2 text-sm md:text-base ${
-                isProcessing
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              } text-white rounded transition`}
-            >
+          {!hasTimedIn || (hasTimedIn && hasTimedOut) ? (
+            <button onClick={handleAttendance} disabled={isProcessing} className="px-6 py-2 bg-blue-500 text-white rounded">
               {isProcessing ? "Processing..." : "Time In"}
             </button>
-          )}
-  
-          {hasTimedIn && !hasTimedOut && (
-            <button
-              onClick={handleAttendance}
-              disabled={isProcessing}
-              className={`px-6 py-2 text-sm md:text-base ${
-                isProcessing
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-green-500 hover:bg-green-600"
-              } text-white rounded transition`}
-            >
+          ) : (
+            <button onClick={handleAttendance} disabled={isProcessing} className="px-6 py-2 bg-green-500 text-white rounded">
               {isProcessing ? "Processing..." : "Time Out"}
             </button>
           )}
         </div>
       </div>
     </div>
-  );  
+  );
 }
