@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ClipLoader } from "react-spinners"; // Import the spinner
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -11,6 +12,7 @@ export default function Home() {
   const [hasTimedOut, setHasTimedOut] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attendanceTimestamp, setAttendanceTimestamp] = useState<string | null>(null); // New state to store the timestamp
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -155,14 +157,18 @@ export default function Home() {
         throw new Error(`Failed to save attendance (Status: ${res.status})`);
       }
 
+      const currentTimestamp = now.toLocaleString(); // Save the current timestamp after successful time-in or time-out
+
       if (!hasTimedIn) {
         setHasTimedIn(true);
         setHasTimedOut(false);
+        setAttendanceTimestamp(currentTimestamp); // Set the timestamp
         localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: true, hasTimedOut: false }));
         toast.success("Time In success!");
       } else {
         setHasTimedOut(true);
         setHasTimedIn(false);
+        setAttendanceTimestamp(currentTimestamp); // Set the timestamp
         localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: false, hasTimedOut: true }));
         toast.success("Time Out success!");
       }
@@ -176,7 +182,7 @@ export default function Home() {
 
   return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
-      <ToastContainer position="top-right" style={{ marginTop: "80px" }}/>
+      <ToastContainer position="top-right" style={{ marginTop: "80px" }} />
       <div className="col-span-12 flex flex-col items-center">
         <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm text-center">{dateTime}</p>
 
@@ -191,10 +197,25 @@ export default function Home() {
         {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
 
         <div className="mt-4 w-full flex justify-center">
-          <button onClick={handleAttendance} disabled={isProcessing} className="px-6 py-2 bg-blue-500 text-white rounded transition hover:bg-blue-600">
-            {isProcessing ? "Processing..." : hasTimedIn && !hasTimedOut ? "Time Out" : "Time In"}
+          <button
+            onClick={handleAttendance}
+            disabled={isProcessing}
+            className="px-6 py-2 bg-blue-500 text-white rounded transition hover:bg-blue-600"
+          >
+            {isProcessing ? (
+              <ClipLoader color="white" size={20} />
+            ) : (
+              hasTimedIn && !hasTimedOut ? "Time Out" : "Time In"
+            )}
           </button>
         </div>
+
+        {/* Show the attendance timestamp below the button */}
+        {attendanceTimestamp && (
+          <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-300">
+            {hasTimedIn ? `Time In: ${attendanceTimestamp}` : `Time Out: ${attendanceTimestamp}`}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 interface AddAccountProps {
-  showModal: boolean;
-  setShowModal: (show: boolean) => void;
   onAddAccount: (account: any) => void;
 }
 
 const roles = ["Admin", "User"];
+const department = ["Accountant", "IT", "Associate", "Operations"];
 
-const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddAccount }) => {
+const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
   const [newAccount, setNewAccount] = useState({
     title: "",
     firstName: "",
@@ -28,33 +27,15 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [userRole, setUserRole] = useState<string>("");
+  const [loading, setLoading] = useState(false); // Para sa loading spinner
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No authentication token found!");
-      return;
-    }
+    if (!token) return;
 
     try {
-      // Debugging: Print raw token
-      console.log("Raw JWT Token:", token);
-
-      const base64Url = token.split(".")[1];
-      if (!base64Url) {
-        console.error("Invalid JWT format: Missing payload");
-        return;
-      }
-
-      const decoded = JSON.parse(atob(base64Url));
-      console.log("Decoded Token Payload:", decoded);
-
-      if (decoded.role) {
-        setUserRole(decoded.role);
-        console.log("User Role Set:", decoded.role);
-      } else {
-        console.error("Role is missing in token payload");
-      }
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      if (decoded.role) setUserRole(decoded.role);
     } catch (error) {
       console.error("Token decoding error:", error);
     }
@@ -106,247 +87,120 @@ const AddAccount: React.FC<AddAccountProps> = ({ showModal, setShowModal, onAddA
   };
 
   const handleAddAccount = async () => {
-    console.log("Submitting Data:", newAccount);
-
-    // Validate form
-    if (!isFormValid()) {
-      console.error("Form has errors!", errors);
-      return;
-    }
-
-    // Get authentication token
+    if (!isFormValid()) return;
+  
     const token = localStorage.getItem("token");
-    console.log("Auth Token:", token);
-
     if (!token) {
       console.error("No authentication token found!");
       return;
     }
-
-    // Check if user has Admin role
+  
     if (!userRole) {
       console.error("User role is undefined! Check token decoding.");
       return;
     }
-
-    console.log("👤 User Role:", userRole);
-
+  
     if (userRole !== "Admin") {
       console.error("Unauthorized: Only admins can create new accounts.");
       return;
     }
-
+  
     try {
+      setLoading(true); // Show loading spinner
       const headers = {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       };
-
-      console.log("Request Headers:", headers);
-
+  
       const response = await fetch("http://localhost:4000/accounts", {
         method: "POST",
         headers,
         body: JSON.stringify(newAccount),
       });
-
+  
       if (!response.ok) {
         const errorMessage = await response.text();
         throw new Error(`Failed to add account: ${response.status} - ${errorMessage}`);
       }
-
-      const data = await response.json();
-      console.log("Account added successfully:", data);
-
-      setShowModal(false);
+  
+      await response.json();
       toast.success("Added Successfully", {
         position: "bottom-right",
-        autoClose: 3000,
+        autoClose: 2000,
       });
+  
+      setTimeout(() => {
+        window.location.href = "/workforce"; // Refresh + Redirect to WorkForce page
+      }, 1000); // Wait for 1 second before redirect
+  
     } catch (error) {
       console.error("Error adding account:", error);
       toast.error("Failed to add account. Please try again.", {
         position: "bottom-right",
         autoClose: 3000,
       });
+    } finally {
+      setLoading(false); // Hide loading spinner
     }
   };
-
-  if (!showModal) return null;
-
+  
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-opacity-20 z-[999999]">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-screen overflow-auto dark:text-gray-300 dark:bg-gray-800">
-        <h3 className="text-lg font-bold mb-4">Add Account</h3>
-        <div className="grid grid-cols-2 gap-4 dark:bg-gray-800">
-        <div className="flex flex-col">
-          <label className="font-semibold dark:text-gray-300">Title</label>
-          <select
-            name="title"
-            value={newAccount.title}
-            onChange={handleInputChange}
-            className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-          >
-            <option value="">Select Title</option>
-            <option value="Mr">Mr</option>
-            <option value="Mrs">Mrs</option>
-            <option value="Miss">Miss</option>
-            <option value="Ms">Ms</option>
-          </select>
-        </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">First Name</label>
-            <input
-              type="text"
-              name="firstName"
-              placeholder="First Name"
-              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-              value={newAccount.firstName}
-              onChange={handleInputChange}
-            />
-            {errors.firstName && <p className="text-red-500 text-sm">{errors.firstName}</p>}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">Last Name</label>
-            <input
-              type="text"
-              name="lastName"
-              placeholder="Last Name"
-              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-              value={newAccount.lastName}
-              onChange={handleInputChange}
-            />
-             {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName}</p>}
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">Role</label>
-            <select
-              name="role"
-              value={newAccount.role}
-              onChange={handleInputChange}
-              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-            >
-              <option value="">Select Role</option>
-              {roles.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex flex-col">
-              <label className="font-semibold dark:text-gray-300">Email</label>
-              <select
-                name="department"
-                value={newAccount.department}
-                onChange={handleInputChange}
+    <div className="p-6 rounded-lg shadow-lg w-full max-w-3xl mx-auto bg-white dark:bg-gray-800 dark:text-gray-300">
+      <h3 className="text-lg font-bold mb-4">Add Account</h3>
+      <div className="grid grid-cols-2 gap-4">
+        {[
+          { label: "Title", name: "title", type: "select", options: ["Mr", "Mrs", "Miss", "Ms"] },
+          { label: "First Name", name: "firstName", type: "text" },
+          { label: "Last Name", name: "lastName", type: "text" },
+          { label: "Phone", name: "phone", type: "text" },
+          { label: "Role", name: "role", type: "select", options: roles },
+          { label: "Department", name: "department", type: "select", options: department },
+          { label: "Email", name: "email", type: "email" },
+          { label: "Password", name: "password", type: "password" },
+          { label: "Confirm Password", name: "confirmPassword", type: "password" },
+          { label: "Country", name: "country", type: "text" },
+          { label: "City", name: "city", type: "text" },
+          { label: "Postal Code", name: "postalCode", type: "text" },
+        ].map(({ label, name, type, options }) => (
+          <div key={name} className="flex flex-col">
+            <label className="font-semibold dark:text-gray-300">{label}</label>
+            {type === "select" ? (
+              <select name={name} value={newAccount[name as keyof typeof newAccount]} onChange={handleInputChange} className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300">
+                <option value="">Select {label}</option>
+                {options?.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type={type}
+                name={name}
+                placeholder={label}
                 className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-                >
-                <option value="">Select Department</option>
-                <option value="Accountant">Accountant</option>
-                <option value="IT">IT</option>
-                <option value="Associate">Associate</option>
-            </select>
+                value={newAccount[name as keyof typeof newAccount]}
+                onChange={handleInputChange}
+              />
+            )}
+            {errors[name] && <p className="text-red-500 text-sm">{errors[name]}</p>}
           </div>
-
-   <div className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">Email</label>
-            <input
-              type="email"
-              name="email"
-               placeholder="Email"
-              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-              value={newAccount.email}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold">Phone</label>
-            <input
-              type="phone"
-              name="phone"
-              placeholder="Phone"
-              className="border p-2 w-full"
-              value={newAccount.phone}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold">Country</label>
-            <input
-              type="text"
-              name="country"
-              placeholder="Country"
-              className="border p-2 w-full"
-              value={newAccount.country}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold">City</label>
-            <input
-              type="text"
-              name="city"
-              placeholder="City"
-              className="border p-2 w-full"
-              value={newAccount.city}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold">Postal Code</label>
-            <input
-              type="text"
-              name="postalCode"
-              placeholder="Postal Code"
-              className="border p-2 w-full"
-              value={newAccount.postalCode}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Password"
-              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-              value={newAccount.password}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-              value={newAccount.confirmPassword}
-              onChange={handleInputChange}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-2 mt-4">
-          <button onClick={() => setShowModal(false)} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded">
-            Cancel
-          </button>
-          <button onClick={handleAddAccount} className="px-4 py-2 bg-blue-500 text-white rounded">
-            Add Account
-          </button>
-        </div>
+        ))}
       </div>
-     {/* Toast Container */}
-     <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar theme="dark" className="dark:bg-gray-900 dark:text-gray-300" />
+
+      <div className="flex justify-end space-x-2 mt-4">
+        <button onClick={() => window.history.back()} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded">
+          Cancel
+        </button>
+        <button 
+          onClick={handleAddAccount} 
+          className="px-4 py-2 bg-blue-500 text-white rounded flex items-center justify-center"
+          disabled={loading}
+        >
+          {loading ? <span className="loader"></span> : "Add Account"}
+        </button>
+      </div>
+      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar theme="dark" />
     </div>
   );
 };

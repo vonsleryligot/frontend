@@ -117,7 +117,7 @@ const Calendar: React.FC = () => {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="WorkForce" />
+      <PageBreadcrumb pageTitle="Calendar" />
         <div className="rounded-2xl border  border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
           <div className="custom-calendar">
             <FullCalendar

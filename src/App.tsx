@@ -13,14 +13,14 @@ import Home from "./pages/Dashboard/Home";
 import PrivateRoute from "./routes/PrivateRoute";
 import ToDo from "./pages/ToDo";
 import Workforce from "./pages/WorkForce";
-// import Hours from "./pages/Hours";
 import OpenShifts from "./pages/OpenShifts";
 import Leave from "./pages/Leave";
 import Timesheet from "./pages/Timesheet";
 import { ShiftProvider } from "./pages/ShiftContext"; 
 import { AuthProvider } from "./context/AuthContext"; 
 import { ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import AddAccount from "./pages/AddAccount";
+
 
 <ToastContainer />
 
@@ -41,14 +41,15 @@ export default function App() {
                 <Route path="/profile" element={<UserProfiles />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/todo" element={<ToDo />} />
+                <Route path="/open-shifts" element={<OpenShifts />} />
                 <Route path="/workforce" element={<Workforce />} />
                 <Route path="/leaves" element={<Leave />} />
-                {/* <Route path="/hours" element={<Hours />} /> */}
                 <Route path="/paycheck" element={<Calendar />} />
                 <Route path="/shifts" element={<Calendar />} />
                 <Route path="/utilities" element={<Calendar />} />
                 <Route path="/hours/open-shifts" element={<OpenShifts />} />
                 <Route path="/timesheet" element={<Timesheet />} /> 
+                <Route path="/add-account" element={<AddAccount onAddAccount={() => {}} />} />
               </Route>
             </Route>
 

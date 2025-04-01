@@ -182,8 +182,8 @@ export default function OpenShifts() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Open Shift Logs" />
-      <div className="p-6  rounded-lg shadow-md dark:border-gray-00 border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+    <PageBreadcrumb pageTitle="Home / Hours / OpenShift Logs" />
+      <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
@@ -241,7 +241,7 @@ export default function OpenShifts() {
         {/* Pagination Controls */}
         <div className="flex justify-between items-center mt-4">
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            className="bg-gray-500 text-white px-4 py-2 rounded"
             disabled={currentPage === 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
@@ -251,7 +251,7 @@ export default function OpenShifts() {
             Page {currentPage} of {totalPages}
           </div>
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+            className="bg-gray-500 text-white px-4 py-2 rounded"
             disabled={currentPage === totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
