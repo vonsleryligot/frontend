@@ -1,55 +1,35 @@
-// import { useState } from "react";
+// import React from "react";
+// import { Link } from "react-router-dom";
+// import { useAuth } from "../context/AuthContext";
 
-// // Attendance Log Type
-// interface AttendanceLog {
-//   id: number;
-//   user_id: number;
-//   check_in: string | null;
-//   check_out: string | null;
-//   status: "Present" | "Absent" | "Late" | "On Leave";
-// }
+// const Hours: React.FC = () => {
+//   const { user } = useAuth(); // Get user info including employment type
 
-// // Sample Data
-// const initialLogs: AttendanceLog[] = [
-//   { id: 1, user_id: 101, check_in: "08:30 AM", check_out: "05:00 PM", status: "Present" },
-//   { id: 2, user_id: 102, check_in: "09:15 AM", check_out: "04:45 PM", status: "Late" },
-//   { id: 3, user_id: 103, check_in: null, check_out: null, status: "Absent" },
-// ];
+//   // Determine which subnav items to show based on employment type
+//   const subNavItems = [];
 
-// export default function Hours() {
-//   const [logs] = useState<AttendanceLog[]>(initialLogs);
+//   if (user?.employmentType === "Regular") {
+//     subNavItems.push({ name: "Regular Shift", path: "/hours/regular-shifts" });
+//   } else if (user?.employmentType === "Open Shift") {
+//     subNavItems.push({ name: "Open Shifts", path: "/hours/open-shifts" });
+//   }
 
-//   return (
-//     <div style={{ padding: "16px", border: "1px solid #ddd", borderRadius: "8px", maxWidth: "600px" }}>
-//       <h2 style={{ fontSize: "20px", marginBottom: "12px" }}>Attendance Log</h2>
-//       <table style={{ width: "100%", borderCollapse: "collapse" }}>
-//         <thead>
-//           <tr style={{ backgroundColor: "#f4f4f4", textAlign: "left" }}>
-//             <th style={{ padding: "8px", borderBottom: "1px solid #ddd" }}>User ID</th>
-//             <th style={{ padding: "8px", borderBottom: "1px solid #ddd" }}>Check-in</th>
-//             <th style={{ padding: "8px", borderBottom: "1px solid #ddd" }}>Check-out</th>
-//             <th style={{ padding: "8px", borderBottom: "1px solid #ddd" }}>Status</th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {logs.map((log) => (
-//             <tr key={log.id} style={{ borderBottom: "1px solid #ddd" }}>
-//               <td style={{ padding: "8px" }}>{log.user_id}</td>
-//               <td style={{ padding: "8px" }}>{log.check_in || "N/A"}</td>
-//               <td style={{ padding: "8px" }}>{log.check_out || "N/A"}</td>
-//               <td
-//                 style={{
-//                   padding: "8px",
-//                   fontWeight: "bold",
-//                   color: log.status === "Present" ? "green" : log.status === "Late" ? "orange" : "red",
-//                 }}
-//               >
-//                 {log.status}
-//               </td>
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// }
+//   // return (
+//   //   <div className="hours-page">
+//   //     <h1 className="text-2xl font-bold mb-4">Hours</h1>
+//   //     <nav className="subnav">
+//   //       <ul className="flex gap-4">
+//   //         {subNavItems.map((item) => (
+//   //           <li key={item.name}>
+//   //             <Link to={item.path} className="text-blue-500 hover:underline">
+//   //               {item.name}
+//   //             </Link>
+//   //           </li>
+//   //         ))}
+//   //       </ul>
+//   //     </nav>
+//   //   </div>
+//   // );
+// };
+
+// export default Hours;

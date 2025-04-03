@@ -17,6 +17,7 @@ export default function UserInfoCard() {
     email: "",
     phone: "",
     role: "",
+    employmentType: "",
   });
 
   // Populate form fields when `user` data changes
@@ -30,6 +31,7 @@ useEffect(() => {
       email: user.email || "",
       phone: user.phone ? String(user.phone) : "",
       role: user.role || "",
+       employmentType: user. employmentType || "",
     }));
   }
 }, [user]);
@@ -141,6 +143,13 @@ const handleSave = async () => {
                 {formData.role || "N/A"}
               </p>
             </div>
+
+            <div>
+              <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employment Type</p>
+              <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                {formData.employmentType || "N/A"}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -192,7 +201,12 @@ const handleSave = async () => {
                 <Input id="phone" type="text" name="phone" value={formData.phone} onChange={handleChange} />
               </div>
 
-              <div className="col-span-2">
+              <div>
+                <Label htmlFor="employmenttype">Employment Type</Label>
+                <Input id="employmenttype" type="text" name="employmenttype" value={formData.employmentType} disabled />
+              </div>
+
+              <div>
                 <Label htmlFor="role">Role</Label>
                 <Input id="role" type="text" name="role" value={formData.role} disabled />
               </div>

@@ -17,6 +17,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
     phone: "",
     role: "",
     department: "",
+    employmentType: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -68,7 +69,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
   };
 
   const isFormValid = () => {
-    const requiredFields = ["title", "firstName", "lastName", "phone", "role", "email", "password", "confirmPassword", "country", "city", "postalCode"];
+    const requiredFields = ["title", "firstName", "lastName", "phone", "role", "employmentType", "email", "password", "confirmPassword", "country", "city", "postalCode"];
     const newErrors: { [key: string]: string } = {};
 
     requiredFields.forEach((field) => {
@@ -154,6 +155,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
           { label: "Last Name", name: "lastName", type: "text" },
           { label: "Phone", name: "phone", type: "text" },
           { label: "Role", name: "role", type: "select", options: roles },
+          { label: "Employment Type", name: "employmentType", type: "select", options: ["Open Shifts", "Regular", "Part-Time", "Apprenticeship"] },
           { label: "Department", name: "department", type: "select", options: department },
           { label: "Email", name: "email", type: "email" },
           { label: "Password", name: "password", type: "password" },

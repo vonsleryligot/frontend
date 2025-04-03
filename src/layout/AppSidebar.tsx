@@ -70,6 +70,10 @@ const navItems: NavItem[] = [
         path: "/hours/open-shifts", // Updated path
       },
       {
+        name: "Regular Shifts",
+        path: "/hours/regular-shifts", // Updated path
+      },
+      {
         name: "Absent",
         subItems: [
           { name: "Overview", path: "/hours/absent/overview" },

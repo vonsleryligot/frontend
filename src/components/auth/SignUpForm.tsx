@@ -22,6 +22,7 @@ export default function SignUpForm() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
+  const [employmentType, setemploymentType] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -93,7 +94,7 @@ export default function SignUpForm() {
     setError("");
 
     if (step === 1) {
-      if (!firstName || !lastName || !department || !email || !phone || !password || !confirmPassword) {
+      if (!firstName || !lastName || !department || !employmentType || !email || !phone || !password || !confirmPassword) {
         setError("All fields are required");
         return;
       }
@@ -124,6 +125,7 @@ export default function SignUpForm() {
         firstName,
         lastName,
         department,
+        employmentType,
         email,
         phone,
         password,
@@ -195,8 +197,28 @@ export default function SignUpForm() {
                       <option value="Accountant">Accountant</option>
                       <option value="IT">IT</option>
                       <option value="Associate">Associate</option>
+                      <option value="Operation">Operation</option>
                     </select>
                   </div>
+                  {/* {Employment Type} */}
+                  <div>
+                    <Label>Employment Type<span className="text-error-500">*</span></Label>
+                    <select
+                      value={employmentType}
+                      onChange={(e) => setemploymentType(e.target.value)}
+                      className="w-full p-2 border rounded-lg text-gray-500 dark:text-gray-400"
+                      aria-required="true"
+
+                      // employmentTypes: ["regular", "part-time", "open shift", "apprenticeship"], // Add employmentTypes
+                    >
+                      <option value="" disabled>-- Select Employment Type --</option>
+                      <option value="Regular">Regular</option>
+                      <option value="Part-Time">Part Time</option>
+                      <option value="Apprenticeship">Apprenticeship</option>
+                      <option value="Open-Shifts">Open Shifts</option>
+                    </select>
+                  </div>
+
                   {/* Email */}
                   <div>
                     <Label>Email<span className="text-error-500">*</span></Label>

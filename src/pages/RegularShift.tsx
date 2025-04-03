@@ -12,8 +12,6 @@ interface Shift {
   totalHours: string | null;
   shifts: string;
   status: string;
-  imageId: string | null; // Added for time-in image
-  timeOutImageId: string | null; // Added for time-out image
 }
 
 interface User {
@@ -31,7 +29,7 @@ interface ActionLog {
   status: string;
 }
 
-export default function OpenShifts() {
+export default function RegularShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
@@ -39,18 +37,6 @@ export default function OpenShifts() {
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
-  const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
-
-  const handleImageClick = (imageUrl: string) => {
-    setModalImage(imageUrl);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setModalImage(null);
-  };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -86,7 +72,10 @@ export default function OpenShifts() {
         const response = await fetch("http://localhost:4000/attendances");
         if (!response.ok) throw new Error("Failed to fetch attendance records");
         const data: Shift[] = await response.json();
+
+        // Sort the shifts based on timeIn (descending order) and handle null timeIn values at the bottom
         const sortedShifts = data
+          .filter((shift) => shift.shifts === "Regular") // Filter for Regular shifts
           .filter((shift) => userId === 1 || shift.userId === userId) // Filter by userId if needed
           .sort((a, b) => {
             if (a.timeIn && b.timeIn) {
@@ -194,12 +183,12 @@ export default function OpenShifts() {
 
   return (
     <>
-    <PageBreadcrumb pageTitle="Home / Hours / Open Shift Logs" />
+      <PageBreadcrumb pageTitle="Home / Hours / Regular Shift Logs" />
       <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
-        <div className="overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
             <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
@@ -216,9 +205,6 @@ export default function OpenShifts() {
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {currentShifts.length > 0 ? (
                 currentShifts.map((shift) => {
-                     // Add console logs here to inspect image IDs
-                    console.log('Time In Image ID:', shift.imageId);  // Log Time In Image ID
-                    console.log('Time Out Image ID:', shift.timeOutImageId);  // Log Time Out Image ID
                   const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
                   const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
 
@@ -226,29 +212,8 @@ export default function OpenShifts() {
                     <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeIn ? formatTime(shift.timeIn) : "-"}
-                        {shift.imageId && (
-                          <img
-                            src={`http://localhost:4000/uploads/${shift.imageId}`}
-                            alt="Time In"
-                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                          />
-                        )}
-                      </td>
-
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeOut ? formatTime(shift.timeOut) : "-"}
-                        {shift.timeOutImageId && (
-                          <img
-                            src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
-                            alt="Time Out"
-                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                          />
-                        )}
-                      </td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.timeIn ? formatTime(shift.timeIn) : "-"}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.timeOut ? formatTime(shift.timeOut) : "-"}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.shifts}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold capitalize">{displayStatus}</td>

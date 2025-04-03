@@ -53,7 +53,13 @@ const handleSave = async () => {
   setLoading(true);
 
   try {
-    console.log("Sending to API:", JSON.stringify(formData)); // Log request
+    // Ensure employmentType is included in the request body
+    const updatedData = {
+      ...formData,
+      employmentType: user.employmentType || "", // Ensure employmentType is included
+    };
+
+    console.log("Sending to API:", JSON.stringify(updatedData)); // Log request
 
     const response = await fetch(`http://localhost:4000/accounts/${user.id}`, {
       method: "PUT",
@@ -61,7 +67,7 @@ const handleSave = async () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(updatedData),
     });
 
     const responseData = await response.json();
