@@ -209,8 +209,6 @@ export default function OpenShifts() {
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Total Hours</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Shifts</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Status</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
@@ -251,15 +249,6 @@ export default function OpenShifts() {
                       </td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.shifts}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm"></td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
-                      <button
-                          className="text-blue-600 hover:underline mr-2"
-                          onClick={() => setSelectedShift(shift)}
-                        >
-                          Edit
-                        </button>
-                      </td>
                     </tr>
                   );
                 })
@@ -339,6 +328,7 @@ export default function OpenShifts() {
             </div>
           </div>
         )}
+
         <ToastContainer />
       </div>
     </>

@@ -13,10 +13,17 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attendanceTimestamp, setAttendanceTimestamp] = useState<string | null>(null); // New state to store the timestamp
+  const [lastActionTime, setLastActionTime] = useState<number | null>(null); // Track the last action time (Time In or Time Out)
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
+    // Retrieve last action time from localStorage on component mount
+    const savedLastActionTime = localStorage.getItem("lastActionTime");
+    if (savedLastActionTime) {
+      setLastActionTime(Number(savedLastActionTime)); // Set it in the state
+    }
+
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -122,6 +129,13 @@ export default function Home() {
 
   const handleAttendance = async () => {
     try {
+      // Check if the last action was less than 1 minutes ago
+      const currentTime = Date.now();
+      if (lastActionTime && currentTime - lastActionTime < 1 * 60 * 1000) {
+        toast.error("Please wait 1 minute before clicking again.");
+        return; // Prevent the action if it's within the 1-minute interval
+      }
+
       setIsProcessing(true);
       setError(null);
 
@@ -147,7 +161,7 @@ export default function Home() {
         body: JSON.stringify({
           userId: user.id,
           imageId: imageFilename,
-          shifts: shift, // Gi-balik kay basin needed
+          shifts: shift, 
           time: now.toISOString(),
         }),
       });
@@ -158,6 +172,10 @@ export default function Home() {
       }
 
       const currentTimestamp = now.toLocaleString(); // Save the current timestamp after successful time-in or time-out
+
+      // Set last action time to current time after a successful attendance action
+      setLastActionTime(currentTime);
+      localStorage.setItem("lastActionTime", currentTime.toString()); // Save it to localStorage
 
       if (!hasTimedIn) {
         setHasTimedIn(true);
@@ -180,10 +198,18 @@ export default function Home() {
     }
   };
 
-  return (
-    <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white">
+  useEffect(() => {
+  document.body.style.overflow = "hidden"; // Hide the scrollbar globally when the component is mounted
+
+  return () => {
+    document.body.style.overflow = "auto"; // Reset the overflow style when the component is unmounted
+  };
+}, []);
+
+ return (
+    <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white overflow-hidden">
       <ToastContainer position="top-right" style={{ marginTop: "80px" }} />
-      <div className="col-span-12 flex flex-col items-center">
+      <div className="col-span-12 flex flex-col items-center overflow-hidden">
         <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm text-center">{dateTime}</p>
 
         <video
@@ -199,7 +225,7 @@ export default function Home() {
         <div className="mt-4 w-full flex justify-center">
           <button
             onClick={handleAttendance}
-            disabled={isProcessing}
+            disabled={isProcessing} // Disable if processing
             className="px-6 py-2 bg-blue-500 text-white rounded transition hover:bg-blue-600"
           >
             {isProcessing ? (

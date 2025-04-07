@@ -155,7 +155,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
           { label: "Last Name", name: "lastName", type: "text" },
           { label: "Phone", name: "phone", type: "text" },
           { label: "Role", name: "role", type: "select", options: roles },
-          { label: "Employment Type", name: "employmentType", type: "select", options: ["Open Shifts", "Regular", "Part-Time", "Apprenticeship"] },
+          { label: "Employment Type", name: "employmentType", type: "select", options: ["Open-hifts", "Regular", "Part-Time", "Apprenticeship"] },
           { label: "Department", name: "department", type: "select", options: department },
           { label: "Email", name: "email", type: "email" },
           { label: "Password", name: "password", type: "password" },

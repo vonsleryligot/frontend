@@ -2,9 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
-import { useAuth } from "../context/AuthContext"; // Import authentication context
+import { useAuth } from "../context/AuthContext";
 import {
-  // CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
@@ -22,7 +21,9 @@ type SubNavItem = {
   path?: string;
   pro?: boolean;
   new?: boolean;
-  subItems?: SubNavItem[]; // Allow subItems inside subItems
+  subItems?: SubNavItem[];
+  allowedEmploymentTypes?: string[];
+  roles?: string[];
 };
 
 type NavItem = {
@@ -30,35 +31,33 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   roles: string[];
-  subItems?: SubNavItem[]; // Use updated type
+  subItems?: SubNavItem[];
 };
 
-
-// Sidebar menu items with role restrictions
 const navItems: NavItem[] = [
-  { 
-    icon: <GridIcon />, 
-    name: "Dashboard", 
-    path: "/dashboard", 
-    roles: ["Manager", "Admin", "User"] 
+  {
+    icon: <GridIcon />,
+    name: "Dashboard",
+    path: "/dashboard",
+    roles: ["Manager", "Admin", "User"],
   },
-  { 
-    icon: <FileIcon />, 
-    name: "To Do", 
-    path: "/todo", 
-    roles: ["Manager", "Admin"] 
+  {
+    icon: <FileIcon />,
+    name: "To Do",
+    path: "/todo",
+    roles: ["Manager", "Admin"],
   },
-  { 
-    icon: <GroupIcon />, 
-    name: "WorkForce", 
-    path: "/workforce", 
-    roles: ["Manager", "Admin"] 
+  {
+    icon: <GroupIcon />,
+    name: "WorkForce",
+    path: "/workforce",
+    roles: ["Manager", "Admin"],
   },
-  { 
-    icon: <PaperPlaneIcon />, 
-    name: "Leaves", 
-    path: "/leaves", 
-    roles: ["Manager", "Admin", "User"] 
+  {
+    icon: <PaperPlaneIcon />,
+    name: "Leaves",
+    path: "/leaves",
+    roles: ["Manager", "Admin", "User"],
   },
   {
     icon: <TimeIcon />,
@@ -66,47 +65,60 @@ const navItems: NavItem[] = [
     roles: ["Manager", "Admin", "User"],
     subItems: [
       {
+        name: "All Shifts",
+        path: "/hours/all-shifts",
+        roles: ["Admin"],
+      },
+      {
         name: "Open Shifts",
-        path: "/hours/open-shifts", // Updated path
+        path: "/hours/open-shifts",
+        allowedEmploymentTypes: ["Open-Shifts"],
       },
       {
         name: "Regular Shifts",
-        path: "/hours/regular-shifts", // Updated path
+        path: "/hours/regular-shifts",
+        allowedEmploymentTypes: ["Regular"],
       },
       {
         name: "Absent",
         subItems: [
           { name: "Overview", path: "/hours/absent/overview" },
-          { name: "Detailed View", path: "/hours/absent/detail" }
-        ]
+          { name: "Detailed View", path: "/hours/absent/detail" },
+        ],
       },
-    ]
+    ],
   },
-  { 
-    icon: <DollarLineIcon />, 
-    name: "Pay Check", 
-    path: "/paycheck", 
-    roles: ["Manager", "Admin", "User"] 
+  {
+    icon: <DollarLineIcon />,
+    name: "Pay Check",
+    path: "/paycheck",
+    roles: ["Manager", "Admin", "User"],
+    subItems: [
+      {
+        name: "Pay Slip",
+        path: "/paycheck/payslip",
+      },
+    ],
   },
-  { 
-    icon: <TableIcon />, 
-    name: "Shifts", 
-    roles: ["Manager", "Admin", "User"], 
+  {
+    icon: <TableIcon />,
+    name: "Shifts",
+    roles: ["Manager", "Admin", "User"],
     subItems: [
       { name: "Calendar", path: "/calendar", pro: false },
     ],
   },
-  { 
-    icon: <PencilIcon />, 
-    name: "Utilities", 
-    path: "/utilities", 
-    roles: ["Manager", "Admin"] 
+  {
+    icon: <PencilIcon />,
+    name: "Utilities",
+    path: "/utilities",
+    roles: ["Manager", "Admin"],
   },
 ];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
-  const { user } = useAuth(); // Get user role
+  const { user } = useAuth();
   const location = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState<{ type: "main" | "others"; index: number } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
@@ -134,7 +146,6 @@ const AppSidebar: React.FC = () => {
     );
   };
 
-  // Filter menu items based on user role
   const filteredNavItems = navItems.filter((item) => user?.role && item.roles.includes(user.role));
 
   const renderMenuItems = (items: NavItem[], menuType: "main" | "others") => (
@@ -149,13 +160,11 @@ const AppSidebar: React.FC = () => {
                   ? "menu-item-active"
                   : "menu-item-inactive"
               } cursor-pointer ${
-                !isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "lg:justify-start"
+                !isExpanded && !isHovered ? "lg:justify-center" : "lg:justify-start"
               }`}
             >
               <span
-                className={`menu-item-icon-size  ${
+                className={`menu-item-icon-size ${
                   openSubmenu?.type === menuType && openSubmenu?.index === index
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
@@ -169,8 +178,7 @@ const AppSidebar: React.FC = () => {
               {(isExpanded || isHovered || isMobileOpen) && (
                 <ChevronDownIcon
                   className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                    openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
+                    openSubmenu?.type === menuType && openSubmenu?.index === index
                       ? "rotate-180 text-brand-500"
                       : ""
                   }`}
@@ -187,9 +195,7 @@ const AppSidebar: React.FC = () => {
               >
                 <span
                   className={`menu-item-icon-size ${
-                    isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+                    isActive(nav.path) ? "menu-item-icon-active" : "menu-item-icon-inactive"
                   }`}
                 >
                   {nav.icon}
@@ -214,47 +220,55 @@ const AppSidebar: React.FC = () => {
               }}
             >
               <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
-                    <Link
-                      to={subItem.path ?? "#"}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path ?? "")
-
-                          ? "menu-dropdown-item-active"
-                          : "menu-dropdown-item-inactive"
-                      }`}
-                    >
-                      {subItem.name}
-                      <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path ?? "")
-
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
-                          >
-                            new
-                          </span>
-                        )}
-                        {subItem.pro && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path ?? "")
-
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge`}
-                          >
-                            pro
-                          </span>
-                        )}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+                {nav.subItems
+                  .filter((subItem) => {
+                    // Filter by both role and employment type
+                    if (subItem.roles && !subItem.roles.includes(user?.role || "")) {
+                      return false;
+                    }
+                    if (subItem.allowedEmploymentTypes && !subItem.allowedEmploymentTypes.includes(user?.employmentType || "")) {
+                      return false;
+                    }
+                    return true;
+                  })
+                  .map((subItem) => (
+                    <li key={subItem.name}>
+                      <Link
+                        to={subItem.path || "#"}  // Default to '#' if path is undefined
+                        className={`menu-dropdown-item ${
+                          isActive(subItem.path || "")  // Use fallback if path is undefined
+                            ? "menu-dropdown-item-active"
+                            : "menu-dropdown-item-inactive"
+                        }`}
+                      >
+                        {subItem.name}
+                        <span className="flex items-center gap-1 ml-auto">
+                          {subItem.new && (
+                            <span
+                              className={`ml-auto ${
+                                isActive(subItem.path || "")
+                                  ? "menu-dropdown-badge-active"
+                                  : "menu-dropdown-badge-inactive"
+                              } menu-dropdown-badge`}
+                            >
+                              new
+                            </span>
+                          )}
+                          {subItem.pro && (
+                            <span
+                              className={`ml-auto ${
+                                isActive(subItem.path || "")
+                                  ? "menu-dropdown-badge-active"
+                                  : "menu-dropdown-badge-inactive"
+                              } menu-dropdown-badge`}
+                            >
+                              pro
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </div>
           )}
@@ -262,8 +276,9 @@ const AppSidebar: React.FC = () => {
       ))}
     </ul>
   );
+  
   return (
-        <aside
+    <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
           isExpanded || isMobileOpen

@@ -22,6 +22,8 @@ import { ToastContainer } from "react-toastify";
 import AddAccount from "./pages/AddAccount";
 import Payslip from "./pages/Payslip";
 import RegularShift from "./pages/RegularShift";
+import TodoOpenShifts from "./pages/TodoOpenShifts";
+import AllShifts from "./pages/AllShifts";
 // import Hours from "./pages/Hours";
 
 <ToastContainer />
@@ -45,6 +47,7 @@ export default function App() {
                 <Route path="/todo" element={<ToDo />} />
                 <Route path="/open-shifts" element={<OpenShifts />} />
                 <Route path="/hours/regular-shifts" element={<RegularShift />} />
+                <Route path="/hours/all-shifts" element={<AllShifts/>} />
                 <Route path="/workforce" element={<Workforce />} />
                 <Route path="/leaves" element={<Leave />} />
                 <Route path="/paycheck/payslip" element={<Payslip/>} />
@@ -52,6 +55,7 @@ export default function App() {
                 <Route path="/utilities" element={<Calendar />} />
                 <Route path="/hours/open-shifts" element={<OpenShifts />} />
                 <Route path="/timesheet" element={<Timesheet />} /> 
+                <Route path="/todo-open-shifts" element={<TodoOpenShifts />} />
                 <Route path="/add-account" element={<AddAccount onAddAccount={() => {}} />} />
                 {/* <Route path="/hours" element={<Hours />} /> */}
               </Route>

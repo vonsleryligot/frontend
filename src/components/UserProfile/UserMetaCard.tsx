@@ -15,9 +15,10 @@ export default function UserMetaCard() {
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordFormData, setPasswordFormData] = useState({
     oldPassword: "",
-    Password: "",
+    password: "",
     confirmPassword: "",
   });
+
   const [loading, setLoading] = useState(false); // Loading state for password change
 
   // Fetch profile image
@@ -74,65 +75,67 @@ export default function UserMetaCard() {
 
   // Handle input changes for the password form
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setPasswordFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
   // Handle password reset
   const handleResetPassword = async () => {
-    const { Password, confirmPassword } = passwordFormData;
-
-    // Validation: Ensure both passwords are filled and match
-    if (!Password || !confirmPassword) {
-      toast.error("Both password fields are required.");
+    const { password, confirmPassword } = passwordFormData;
+  
+    if (!password || !confirmPassword) {
+      toast.error("All password fields are required.");
       return;
     }
-
-    if (Password !== confirmPassword) {
+  
+    if (password !== confirmPassword) {
       toast.error("New password and confirm password do not match.");
       return;
     }
-
-    setLoading(true); // Start loading
-
-    // Fetch token from localStorage
+  
+    setLoading(true);
+  
+    // Check if the token exists in localStorage before proceeding
     const token = localStorage.getItem("token");
     if (!token) {
-      console.error("Unauthorized: No token found");
+      toast.error("Unauthorized: No token found");
+      setLoading(false);
       return;
     }
-
+  
     try {
       const response = await fetch("http://localhost:4000/accounts/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Ensure token is added
+          Authorization: `Bearer ${token}`, // Ensure the token is being sent in headers
         },
         body: JSON.stringify({
-          token, // Send the token received for resetting password
-          password: Password, // Send new password
+          token, // Add token back to the request body
+          password,
+          confirmPassword,
         }),
       });
-
+  
       const data = await response.json();
-
       if (response.ok) {
         toast.success("Password changed successfully!");
-        setPasswordModalOpen(false); // Close the modal after successful password change
+        setTimeout(() => setPasswordModalOpen(false), 1500);
       } else {
+        console.error("Server error:", data); // Log the full response for debugging
         toast.error(data.message || "Failed to change password.");
       }
     } catch (error) {
+      console.error("Network error:", error); // Catch network errors
       toast.error("Failed to change password.");
-      console.error(error);
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
   };
-
+  
   // Open the password change modal
   const openModal = () => {
     setPasswordModalOpen(true);
@@ -220,8 +223,8 @@ export default function UserMetaCard() {
                 <Label>New Password</Label>
                 <Input
                   type="password"
-                  name="Password"
-                  value={passwordFormData.Password}
+                  name="password"
+                  value={passwordFormData.password}
                   onChange={handlePasswordChange}
                 />
               </div>
@@ -240,11 +243,13 @@ export default function UserMetaCard() {
               <Button size="sm" variant="outline" onClick={() => setPasswordModalOpen(false)}>
                 Close
               </Button>
-              <Button size="sm" disabled={loading}>
-              <button type="submit" disabled={loading}>
+              <button
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                disabled={loading}
+                type="submit"
+              >
                 {loading ? "Changing..." : "Change Password"}
               </button>
-            </Button>
             </div>
           </form>
         </div>
