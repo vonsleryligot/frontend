@@ -119,11 +119,11 @@ const Timesheet: React.FC = () => {
           <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
            <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time In</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Status</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Actions</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Employee</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Time In</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Time Out</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Status</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
@@ -136,13 +136,13 @@ const Timesheet: React.FC = () => {
               ) : (
                 timesheetData.map((entry) => (
                   <tr key={entry.id} className="hover:bg-gray-800">
-                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
                       {entry.user.firstName !== "Unknown"
                         ? `${entry.user.firstName} ${entry.user.lastName}`
                         : "Unknown User"}
                     </td>
                     <td
-                      className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold relative"
+                      className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative"
                       onMouseEnter={() => setHoveredTimeIn(entry.shift.timeInImage)}
                       onMouseLeave={() => setHoveredTimeIn(null)}
                     >
@@ -154,7 +154,7 @@ const Timesheet: React.FC = () => {
                       )}
                     </td>
                     <td
-                      className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold relative"
+                      className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative"
                       onMouseEnter={() => setHoveredTimeOut(entry.shift.timeOutImage)}
                       onMouseLeave={() => setHoveredTimeOut(null)}
                     >
@@ -165,10 +165,10 @@ const Timesheet: React.FC = () => {
                         </div>
                       )}
                     </td>
-                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
                       {entry.status || "N/A"}
                     </td>
-                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
                       {entry.status === "pending" ? (
                         <div className="flex space-x-2">
                           <button
