@@ -20,6 +20,7 @@ interface User {
   id: number;
   firstName: string;
   lastName: string;
+  employmentType?: string;
 }
 
 interface ActionLog {
@@ -61,8 +62,23 @@ export default function OpenShifts() {
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setUserId(user.id);
+  
+      // Fetch current user detail
+      fetch(`http://localhost:4000/accounts/${user.id}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to fetch current user");
+          return res.json();
+        })
+        .then((userData: User) => {
+          setUsers([userData]); // Set as single-user array
+        })
+        .catch((error) => {
+          console.error("Error fetching current user:", error);
+        });
     }
   }, []);
+  
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -149,7 +165,7 @@ export default function OpenShifts() {
           userId: selectedShift.userId,
           timeIn: formattedTimeIn,
           timeOut: formattedTimeOut,
-          status: "",
+          status: "pending",
         }),
       });
 
@@ -179,6 +195,11 @@ export default function OpenShifts() {
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
+  };
+
+  const getUserEmploymentType = (userId: number) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? user.employmentType ?? "Not Available" : "Not Available";
   };
 
   // Pagination Logic
@@ -250,7 +271,7 @@ export default function OpenShifts() {
                         )}
                       </td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.shifts}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
                         <button

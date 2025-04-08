@@ -20,6 +20,7 @@ interface User {
   id: number;
   firstName: string;
   lastName: string;
+  employmentType?: string;
 }
 
 interface ActionLog {
@@ -39,6 +40,7 @@ export default function OpenShifts() {
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+
   const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
 
@@ -181,6 +183,11 @@ export default function OpenShifts() {
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
   };
 
+  const getUserEmploymentType = (userId: number) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? user.employmentType ?? "Not Available" : "Not Available";
+  };
+
   // Pagination Logic
   const indexOfLastShift = currentPage * itemsPerPage;
   const indexOfFirstShift = indexOfLastShift - itemsPerPage;
@@ -214,44 +221,38 @@ export default function OpenShifts() {
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {currentShifts.length > 0 ? (
                 currentShifts.map((shift) => {
-                     // Add console logs here to inspect image IDs
-                    console.log('Time In Image ID:', shift.imageId);  // Log Time In Image ID
-                    console.log('Time Out Image ID:', shift.timeOutImageId);  // Log Time Out Image ID
-                  const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
-                  const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
+                    return (
+                      <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
+                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
+                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
+                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
+                          {shift.timeIn ? formatTime(shift.timeIn) : "-"}
+                          {shift.imageId && (
+                            <img
+                              src={`http://localhost:4000/uploads/${shift.imageId}`}
+                              alt="Time In"
+                              className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
+                              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
+                            />
+                          )}
+                        </td>
 
-                  return (
-                    <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeIn ? formatTime(shift.timeIn) : "-"}
-                        {shift.imageId && (
-                          <img
-                            src={`http://localhost:4000/uploads/${shift.imageId}`}
-                            alt="Time In"
-                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                          />
-                        )}
-                      </td>
-
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeOut ? formatTime(shift.timeOut) : "-"}
-                        {shift.timeOutImageId && (
-                          <img
-                            src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
-                            alt="Time Out"
-                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                          />
-                        )}
-                      </td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.shifts}</td>
-                    </tr>
-                  );
-                })
+                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
+                          {shift.timeOut ? formatTime(shift.timeOut) : "-"}
+                          {shift.timeOutImageId && (
+                            <img
+                              src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
+                              alt="Time Out"
+                              className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
+                              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
+                            />
+                          )}
+                        </td>
+                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
+                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
+                      </tr>
+                    );
+                  })
               ) : (
                 <tr>
                   <td colSpan={8} className="text-center p-4">

@@ -139,7 +139,7 @@ const WorkForce = () => {
                         <img
                           src={account.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(account.firstName + " " + account.lastName)}`}
                           alt="Profile"
-                          className="w-15 h-15 rounded-full object-cover border"
+                          className="w-13 h-13 rounded-full object-cover border"
                         />
                       </td>
                       <td className="p-3 text-sm">{account.firstName} {account.middleName} {account.lastName}</td>
@@ -196,7 +196,7 @@ const WorkForce = () => {
             <img
               src={selectedAccount.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAccount.firstName + " " + selectedAccount.lastName)}`}
               alt="Profile"
-              className="w-24 h-24 rounded-full object-cover border shadow-md"
+              className="w-13 h-13 rounded-full object-cover border shadow-md"
             />
             <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-300">
               {selectedAccount.firstName} {selectedAccount.middleName} {selectedAccount.lastName}

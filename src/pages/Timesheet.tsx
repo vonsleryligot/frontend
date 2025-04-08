@@ -113,11 +113,11 @@ const Timesheet: React.FC = () => {
   return (
     <>
       <PageBreadcrumb pageTitle="Home / To Do / Timesheet" />
-      <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {/* Responsive Table Wrapper */}
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 rounded-lg shadow-sm text-left">
-            <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
+          <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
+           <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time In</th>

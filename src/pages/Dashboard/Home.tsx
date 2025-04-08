@@ -49,7 +49,7 @@ export default function Home() {
     startCamera();
     const interval = setInterval(() => {
       setDateTime(new Date().toLocaleString());
-    }, 1000);
+    }, 5000);
 
     fetchAttendanceStatus();
 
