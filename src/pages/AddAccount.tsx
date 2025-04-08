@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import PageBreadcrumb from "../components/common/PageBreadCrumb";
+
+const roles = ["Admin", "User"];
+const department = ["Accountant", "IT", "Associate", "Operations"];
 
 interface AddAccountProps {
   onAddAccount: (account: any) => void;
 }
-
-const roles = ["Admin", "User"];
-const department = ["Accountant", "IT", "Associate", "Operations"];
 
 const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
   const [newAccount, setNewAccount] = useState({
@@ -26,9 +27,11 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
     postalCode: "",
   });
 
+  const [countries, setCountries] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [userRole, setUserRole] = useState<string>("");
-  const [loading, setLoading] = useState(false); // Para sa loading spinner
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -41,6 +44,36 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
       console.error("Token decoding error:", error);
     }
   }, []);
+
+  useEffect(() => {
+    fetch("https://restcountries.com/v3.1/all")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to fetch countries");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        const countryNames = data.map((country: any) => country.name.common);
+        setCountries(countryNames.sort());
+      })
+      .catch((error) => console.error("Error fetching countries:", error));
+  }, []);
+
+  useEffect(() => {
+    if (newAccount.country) {
+      fetch("https://countriesnow.space/api/v0.1/countries/cities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ country: newAccount.country }),
+      })
+        .then((res) => res.json())
+        .then((data) => setCities(data.data || []))
+        .catch((error) => console.error("Error fetching cities:", error));
+    }
+  }, [newAccount.country]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -69,7 +102,20 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
   };
 
   const isFormValid = () => {
-    const requiredFields = ["title", "firstName", "lastName", "phone", "role", "employmentType", "email", "password", "confirmPassword", "country", "city", "postalCode"];
+    const requiredFields = [
+      "title",
+      "firstName",
+      "lastName",
+      "phone",
+      "role",
+      "employmentType",
+      "email",
+      "password",
+      "confirmPassword",
+      "country",
+      "city",
+      "postalCode",
+    ];
     const newErrors: { [key: string]: string } = {};
 
     requiredFields.forEach((field) => {
@@ -89,51 +135,50 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
 
   const handleAddAccount = async () => {
     if (!isFormValid()) return;
-  
+
     const token = localStorage.getItem("token");
     if (!token) {
       console.error("No authentication token found!");
       return;
     }
-  
+
     if (!userRole) {
       console.error("User role is undefined! Check token decoding.");
       return;
     }
-  
+
     if (userRole !== "Admin") {
       console.error("Unauthorized: Only admins can create new accounts.");
       return;
     }
-  
+
     try {
-      setLoading(true); // Show loading spinner
+      setLoading(true);
       const headers = {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       };
-  
+
       const response = await fetch("http://localhost:4000/accounts", {
         method: "POST",
         headers,
         body: JSON.stringify(newAccount),
       });
-  
+
       if (!response.ok) {
         const errorMessage = await response.text();
         throw new Error(`Failed to add account: ${response.status} - ${errorMessage}`);
       }
-  
+
       await response.json();
       toast.success("Added Successfully", {
         position: "bottom-right",
         autoClose: 2000,
       });
-  
+
       setTimeout(() => {
-        window.location.href = "/workforce"; // Refresh + Redirect to WorkForce page
-      }, 1000); // Wait for 1 second before redirect
-  
+        window.location.href = "/workforce";
+      }, 1000);
     } catch (error) {
       console.error("Error adding account:", error);
       toast.error("Failed to add account. Please try again.", {
@@ -141,69 +186,75 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
         autoClose: 3000,
       });
     } finally {
-      setLoading(false); // Hide loading spinner
+      setLoading(false);
     }
   };
-  
-  return (
-    <div className="p-6 rounded-lg shadow-lg w-full max-w-3xl mx-auto bg-white dark:bg-gray-800 dark:text-gray-300">
-      <h3 className="text-lg font-bold mb-4">Add Account</h3>
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          { label: "Title", name: "title", type: "select", options: ["Mr", "Mrs", "Miss", "Ms"] },
-          { label: "First Name", name: "firstName", type: "text" },
-          { label: "Last Name", name: "lastName", type: "text" },
-          { label: "Phone", name: "phone", type: "text" },
-          { label: "Role", name: "role", type: "select", options: roles },
-          { label: "Employment Type", name: "employmentType", type: "select", options: ["Open-hifts", "Regular", "Part-Time", "Apprenticeship"] },
-          { label: "Department", name: "department", type: "select", options: department },
-          { label: "Email", name: "email", type: "email" },
-          { label: "Password", name: "password", type: "password" },
-          { label: "Confirm Password", name: "confirmPassword", type: "password" },
-          { label: "Country", name: "country", type: "text" },
-          { label: "City", name: "city", type: "text" },
-          { label: "Postal Code", name: "postalCode", type: "text" },
-        ].map(({ label, name, type, options }) => (
-          <div key={name} className="flex flex-col">
-            <label className="font-semibold dark:text-gray-300">{label}</label>
-            {type === "select" ? (
-              <select name={name} value={newAccount[name as keyof typeof newAccount]} onChange={handleInputChange} className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300">
-                <option value="">Select {label}</option>
-                {options?.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type={type}
-                name={name}
-                placeholder={label}
-                className="border p-2 w-full dark:bg-gray-800 dark:text-gray-300"
-                value={newAccount[name as keyof typeof newAccount]}
-                onChange={handleInputChange}
-              />
-            )}
-            {errors[name] && <p className="text-red-500 text-sm">{errors[name]}</p>}
-          </div>
-        ))}
-      </div>
 
-      <div className="flex justify-end space-x-2 mt-4">
-        <button onClick={() => window.history.back()} className="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-gray-300 rounded">
-          Cancel
-        </button>
-        <button 
-          onClick={handleAddAccount} 
-          className="px-4 py-2 bg-blue-500 text-white rounded flex items-center justify-center"
-          disabled={loading}
-        >
-          {loading ? <span className="loader"></span> : "Add Account"}
-        </button>
+  return (
+    <>
+      <PageBreadcrumb pageTitle="Home / Accounts / Add Account" />
+      <div className="p-8 rounded-xl shadow-xl w-full max-w-4xl mx-auto bg-gray-800 dark:text-gray-300">
+        <h3 className="text-2xl font-semibold text-gray-100 mb-6">Add Account</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {[{ label: "Title", name: "title", type: "select", options: ["Mr", "Mrs", "Miss", "Ms"] },
+            { label: "First Name", name: "firstName", type: "text" },
+            { label: "Last Name", name: "lastName", type: "text" },
+            { label: "Phone", name: "phone", type: "text" },
+            { label: "Role", name: "role", type: "select", options: roles },
+            { label: "Employment Type", name: "employmentType", type: "select", options: ["Open-Shifts", "Regular", "Part-Time", "Apprenticeship"] },
+            { label: "Department", name: "department", type: "select", options: department },
+            { label: "Email", name: "email", type: "email" },
+            { label: "Password", name: "password", type: "password" },
+            { label: "Confirm Password", name: "confirmPassword", type: "password" },
+            { label: "Country", name: "country", type: "select", options: countries },
+            { label: "City", name: "city", type: "select", options: cities },
+            { label: "Postal Code", name: "postalCode", type: "text" }].map(({ label, name, type, options }) => (
+            <div key={name} className="flex flex-col">
+              <label className="font-semibold text-gray-300">{label}</label>
+              {type === "select" ? (
+                <select
+                  name={name}
+                  value={newAccount[name as keyof typeof newAccount]}
+                  onChange={handleInputChange}
+                  className="border p-3 w-full bg-gray-700 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select {label}</option>
+                  {options?.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={type}
+                  name={name}
+                  placeholder={label}
+                  className="border p-3 w-full bg-gray-700 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={newAccount[name as keyof typeof newAccount]}
+                  onChange={handleInputChange}
+                />
+              )}
+              {errors[name] && <p className="text-red-500 text-sm mt-1">{errors[name]}</p>}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-end space-x-6 mt-6">
+          <button onClick={() => window.history.back()} className="px-6 py-3 bg-gray-600 text-gray-300 rounded-lg hover:bg-gray-700 transition duration-200">
+            Cancel
+          </button>
+          <button
+            onClick={handleAddAccount}
+            className="px-6 py-3 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition duration-200"
+            disabled={loading}
+          >
+            {loading ? <span className="loader"></span> : "Add Account"}
+          </button>
+        </div>
+        <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar theme="dark" />
       </div>
-      <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar theme="dark" />
-    </div>
+    </>
   );
 };
 

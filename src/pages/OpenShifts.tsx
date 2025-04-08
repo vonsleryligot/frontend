@@ -149,7 +149,7 @@ export default function OpenShifts() {
           userId: selectedShift.userId,
           timeIn: formattedTimeIn,
           timeOut: formattedTimeOut,
-          status: "pending",
+          status: "",
         }),
       });
 

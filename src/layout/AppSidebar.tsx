@@ -80,6 +80,11 @@ const navItems: NavItem[] = [
         allowedEmploymentTypes: ["Regular"],
       },
       {
+        name: "Part Time",
+        path: "/hours/part-time",
+        allowedEmploymentTypes: ["Part-Time"],
+      },
+      {
         name: "Absent",
         subItems: [
           { name: "Overview", path: "/hours/absent/overview" },

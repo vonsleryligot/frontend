@@ -13,6 +13,7 @@ interface Account {
   country: string;
   city: string;
   department: string;
+  employmentType: string;
   postalCode: string;
   email: string;
   phone: string;
@@ -126,6 +127,7 @@ const WorkForce = () => {
                     <th className="p-3 text-sm font-semibold">Email</th>
                     <th className="p-3 text-sm font-semibold">Role</th>
                     <th className="p-3 text-sm font-semibold">Department</th>
+                    <th className="p-3 text-sm font-semibold">Employment Type</th>
                     <th className="p-3 text-sm font-semibold">Contact Number</th>
                     <th className="p-3 text-sm font-semibold">View Details</th>
                   </tr>
@@ -144,6 +146,7 @@ const WorkForce = () => {
                       <td className="p-3 text-sm">{account.email}</td>
                       <td className="p-3 text-sm">{account.role}</td>
                       <td className="p-3 text-sm">{account.department}</td>
+                      <td className="p-3 text-sm">{account.employmentType}</td>
                       <td className="p-3 text-sm">{account.phone}</td>
                       <td className="p-3 text-sm text-center">
                         <button onClick={() => handleViewDetails(account)} className="text-blue-600 hover:text-blue-800">
