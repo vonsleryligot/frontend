@@ -24,6 +24,7 @@ import Payslip from "./pages/Payslip";
 import RegularShift from "./pages/RegularShift";
 import TodoOpenShifts from "./pages/TodoOpenShifts";
 import AllShifts from "./pages/AllShifts";
+import EmployeeDetails from "./pages/EmployeeDetails";
 // import Hours from "./pages/Hours";
 
 <ToastContainer />
@@ -49,6 +50,7 @@ export default function App() {
                 <Route path="/hours/regular-shifts" element={<RegularShift />} />
                 <Route path="/hours/all-shifts" element={<AllShifts/>} />
                 <Route path="/workforce" element={<Workforce />} />
+                <Route path="/employee-details/:id" element={<EmployeeDetails />} />
                 <Route path="/leaves" element={<Leave />} />
                 <Route path="/paycheck/payslip" element={<Payslip/>} />
                 <Route path="/shifts" element={<Calendar />} />

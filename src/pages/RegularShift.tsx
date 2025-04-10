@@ -165,12 +165,12 @@ export default function RegularShifts() {
 
   const handleUpdateShift = async () => {
     if (!selectedShift || !selectedShift.id) return;
-
+  
     try {
       const shiftDate = selectedShift.date;
       const formattedTimeIn = `${shiftDate}T${selectedShift.timeIn}`;
       const formattedTimeOut = `${shiftDate}T${selectedShift.timeOut}`;
-
+  
       const actionLogResponse = await fetch("http://localhost:4000/action-logs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -182,30 +182,61 @@ export default function RegularShifts() {
           status: "pending",
         }),
       });
-
+  
       const actionLogData = await actionLogResponse.json();
       if (!actionLogResponse.ok) {
         throw new Error(actionLogData.message || "Failed to create action log");
       }
-
-      toast.success("Shift update request submitted!", {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
-
+  
+      console.log("Action Log Submitted:", actionLogData); // Debug log
+  
+      // Update the shift status to pending after successful submission
       setShifts((prev) =>
         prev.map((shift) =>
           shift.id === selectedShift.id ? { ...shift, status: "pending" } : shift
         )
       );
-
-      setSelectedShift(null);
+  
+      console.log("Updated Shifts:", shifts); // Debug the updated shifts state
+  
+      // Fetch updated shifts from the backend
+      const response = await fetch("http://localhost:4000/attendances");
+      if (!response.ok) throw new Error("Failed to fetch updated attendance records");
+  
+      const data: Shift[] = await response.json();
+  
+      // Sort and filter shifts again (similar to your initial useEffect)
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        const isAdmin = user.role === "admin";
+  
+        const filteredShifts = isAdmin
+          ? data
+          : data.filter((shift) => shift.userId === user.id);
+  
+        const sortedShifts = filteredShifts.sort((a, b) => {
+          if (a.timeIn && b.timeIn) {
+            return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
+          }
+          return a.timeIn ? -1 : 1;
+        });
+  
+        setShifts(sortedShifts); // Update the state with the latest shifts
+      }
+  
+      toast.success("Shift update request submitted!", {
+        position: "bottom-right",
+        autoClose: 3000,
+      });
+  
+      setSelectedShift(null); // Reset the selected shift
     } catch (error) {
       console.error("Error creating action log:", error);
       toast.error("Something went wrong. Please try again.");
     }
   };
-
+  
   const getUserFullName = (userId: number) => {
     const user = users.find((user) => user.id === userId);
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
@@ -229,7 +260,7 @@ export default function RegularShifts() {
 
   return (
     <>
-    <PageBreadcrumb pageTitle="Home / Hours / Open Shift Logs" />
+    <PageBreadcrumb pageTitle="Home / Hours / Regular Shift Logs" />
       <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}

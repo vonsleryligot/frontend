@@ -20,6 +20,7 @@ interface User {
   id: number;
   firstName: string;
   lastName: string;
+  employmentType?: string;
 }
 
 interface ActionLog {
@@ -31,7 +32,7 @@ interface ActionLog {
   status: string;
 }
 
-export default function OpenShifts() {
+export default function AllShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
@@ -181,6 +182,11 @@ export default function OpenShifts() {
     return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
   };
 
+  const getUserEmploymentType = (userId: number) => {
+    const user = users.find((user) => user.id === userId);
+    return user ? user.employmentType ?? "Not Available" : "Not Available";
+  };
+
   // Pagination Logic
   const indexOfLastShift = currentPage * itemsPerPage;
   const indexOfFirstShift = indexOfLastShift - itemsPerPage;
@@ -194,8 +200,8 @@ export default function OpenShifts() {
 
   return (
     <>
-    <PageBreadcrumb pageTitle="Home / Hours / All Shifts" />
-      <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+      <PageBreadcrumb pageTitle="Home / Hours / All Shifts" />
+      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
@@ -216,9 +222,6 @@ export default function OpenShifts() {
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {currentShifts.length > 0 ? (
                 currentShifts.map((shift) => {
-                     // Add console logs here to inspect image IDs
-                    console.log('Time In Image ID:', shift.imageId);  // Log Time In Image ID
-                    console.log('Time Out Image ID:', shift.timeOutImageId);  // Log Time Out Image ID
                   const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
                   const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
 
@@ -250,10 +253,10 @@ export default function OpenShifts() {
                         )}
                       </td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.shifts}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm"></td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
-                      <button
+                        <button
                           className="text-blue-600 hover:underline mr-2"
                           onClick={() => setSelectedShift(shift)}
                         >
@@ -322,25 +325,38 @@ export default function OpenShifts() {
                   }
                 />
               </label>
-              <div className="flex justify-end mt-4">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={handleUpdateShift}
-                >
-                  Submit
-                </button>
-                <button
-                  className="ml-2 bg-gray-400 text-white px-4 py-2 rounded"
-                  onClick={() => setSelectedShift(null)}
-                >
-                  Cancel
-                </button>
-              </div>
+
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded mt-4 w-full"
+                onClick={handleUpdateShift}
+              >
+                Update Shift
+              </button>
+
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded mt-4 w-full"
+                onClick={() => setSelectedShift(null)}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
-        <ToastContainer />
+        {/* Image Modal */}
+        {isModalOpen && modalImage && (
+          <div
+            className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 z-50 flex items-center justify-center"
+            onClick={closeModal}
+          >
+            <img
+              src={modalImage}
+              alt="Time-in/Time-out"
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        )}
       </div>
+      <ToastContainer />
     </>
   );
 }

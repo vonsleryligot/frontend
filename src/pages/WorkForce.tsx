@@ -26,8 +26,6 @@ const WorkForce = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>("");
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,11 +73,6 @@ const WorkForce = () => {
     }
   };
 
-  const handleViewDetails = (account: Account) => {
-    setSelectedAccount(account);
-    setShowDetailsModal(true);
-  };
-
   // Pagination Logic
   const indexOfLastAccount = currentPage * itemsPerPage;
   const indexOfFirstAccount = indexOfLastAccount - itemsPerPage;
@@ -106,11 +99,11 @@ const WorkForce = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-            <button
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-all duration-200 w-full md:w-auto"
-            >
-              <Link to="/add-account">+ Add Employee</Link>
-            </button>
+              <button
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-md transition-all duration-200 w-full md:w-auto"
+              >
+                <Link to="/add-account">+ Add Employee</Link>
+              </button>
             </div>
           </div>
 
@@ -149,9 +142,9 @@ const WorkForce = () => {
                       <td className="p-3 text-sm">{account.employmentType}</td>
                       <td className="p-3 text-sm">{account.phone}</td>
                       <td className="p-3 text-sm text-center">
-                        <button onClick={() => handleViewDetails(account)} className="text-blue-600 hover:text-blue-800">
+                        <Link to={`/employee-details/${account.id}`} className="text-blue-600 hover:text-blue-800">
                           <EyeIcon className="w-5 h-5" />
-                        </button>
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -182,47 +175,6 @@ const WorkForce = () => {
           </div>
         </div>
       </div>
-      {showDetailsModal && selectedAccount && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl w-full max-w-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-700 dark:text-gray-200">Employee Details</h2>
-            <button onClick={() => setShowDetailsModal(false)} className="text-gray-500 hover:text-red-500">
-              ✖
-            </button>
-          </div>
-          
-          <div className="flex flex-col items-center">
-            <img
-              src={selectedAccount.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedAccount.firstName + " " + selectedAccount.lastName)}`}
-              alt="Profile"
-              className="w-13 h-13 rounded-full object-cover border shadow-md"
-            />
-            <h3 className="mt-2 text-lg font-semibold text-gray-800 dark:text-gray-300">
-              {selectedAccount.firstName} {selectedAccount.middleName} {selectedAccount.lastName}
-            </h3>
-            <p className="text-sm text-gray-500">{selectedAccount.role} - {selectedAccount.department}</p>
-          </div>
-
-          <div className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-            <p><strong>Email:</strong> {selectedAccount.email}</p>
-            <p><strong>Phone:</strong> {selectedAccount.phone}</p>
-            <p><strong>Country:</strong> {selectedAccount.country}</p>
-            <p><strong>City:</strong> {selectedAccount.city}</p>
-            <p><strong>Postal Code:</strong> {selectedAccount.postalCode}</p>
-          </div>
-
-          <div className="mt-4 flex justify-end">
-            <button 
-              onClick={() => setShowDetailsModal(false)} 
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md shadow-md transition-all duration-200"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     </>
   );
 };
