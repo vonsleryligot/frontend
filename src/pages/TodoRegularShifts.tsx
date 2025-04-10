@@ -32,15 +32,15 @@ interface ActionLog {
   status: string;
 }
 
-export default function AllShifts() {
+export default function RegularShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+
   const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
 
@@ -63,7 +63,6 @@ export default function AllShifts() {
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setUserId(user.id);
-      setUserRole(user.role);
     }
   }, []);
 
@@ -83,15 +82,19 @@ export default function AllShifts() {
 
   useEffect(() => {
     const fetchAttendance = async () => {
-      if (userRole !== "Admin") return; // Ensure only Admin can fetch attendance
-
       try {
         setLoading(true);
         setError(null);
         const response = await fetch("http://localhost:4000/attendances");
         if (!response.ok) throw new Error("Failed to fetch attendance records");
         const data: Shift[] = await response.json();
-        const sortedShifts = data
+
+        // Fetch only shifts where the associated user's employmentType is 'Regular'
+        const filteredShifts = data
+          .filter((shift) => {
+            const user = users.find((user) => user.id === shift.userId);
+            return user?.employmentType === "Regular"; // Filter based on employmentType
+          })
           .sort((a, b) => {
             if (a.timeIn && b.timeIn) {
               return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort by timeIn descending
@@ -99,7 +102,7 @@ export default function AllShifts() {
             return a.timeIn ? -1 : 1; // If timeIn is null, treat as older
           });
 
-        setShifts(sortedShifts);
+        setShifts(filteredShifts);
       } catch (error) {
         setError("Error fetching attendance records.");
         console.error("Error fetching attendance:", error);
@@ -108,11 +111,11 @@ export default function AllShifts() {
       }
     };
 
-    if (userRole === "Admin" && userId !== null) {
+    if (userId !== null) {
       fetchAttendance();
     }
-  }, [userId, userRole]);
-  
+  }, [userId, users]); // Re-fetch when users or userId change
+
   useEffect(() => {
     const fetchActionLogs = async () => {
       try {
@@ -203,8 +206,8 @@ export default function AllShifts() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Home / Hours / All Shifts" />
-      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+      <PageBreadcrumb pageTitle="Home / To Do / Regular Logs" />
+      <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
@@ -218,16 +221,11 @@ export default function AllShifts() {
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Total Hours</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Shifts</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Status</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {currentShifts.length > 0 ? (
                 currentShifts.map((shift) => {
-                  const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
-                  const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
-
                   return (
                     <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
@@ -257,15 +255,6 @@ export default function AllShifts() {
                       </td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm"></td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
-                        <button
-                          className="text-blue-600 hover:underline mr-2"
-                          onClick={() => setSelectedShift(shift)}
-                        >
-                          Edit
-                        </button>
-                      </td>
                     </tr>
                   );
                 })
@@ -301,65 +290,8 @@ export default function AllShifts() {
           </button>
         </div>
 
-        {/* Shift Edit Modal */}
-        {selectedShift && (
-          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40 flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-sm w-full text-sm">
-              <h3 className="text-lg font-semibold mb-4">Edit Shift</h3>
-              <label className="block mb-2">
-                Time In:
-                <input
-                  type="time"
-                  className="w-full border p-2 mt-1 text-sm"
-                  value={selectedShift.timeIn || ""}
-                  onChange={(e) =>
-                    setSelectedShift({ ...selectedShift, timeIn: e.target.value })
-                  }
-                />
-              </label>
-              <label className="block mb-2">
-                Time Out:
-                <input
-                  type="time"
-                  className="w-full border p-2 mt-1 text-sm"
-                  value={selectedShift.timeOut || ""}
-                  onChange={(e) =>
-                    setSelectedShift({ ...selectedShift, timeOut: e.target.value })
-                  }
-                />
-              </label>
-
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded mt-4 w-full"
-                onClick={handleUpdateShift}
-              >
-                Update Shift
-              </button>
-
-              <button
-                className="bg-gray-500 text-white px-4 py-2 rounded mt-4 w-full"
-                onClick={() => setSelectedShift(null)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-        {/* Image Modal */}
-        {isModalOpen && modalImage && (
-          <div
-            className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-70 z-50 flex items-center justify-center"
-            onClick={closeModal}
-          >
-            <img
-              src={modalImage}
-              alt="Time-in/Time-out"
-              className="max-w-full max-h-full object-contain"
-            />
-          </div>
-        )}
+        <ToastContainer />
       </div>
-      <ToastContainer />
     </>
   );
 }

@@ -23,8 +23,10 @@ import AddAccount from "./pages/AddAccount";
 import Payslip from "./pages/Payslip";
 import RegularShift from "./pages/RegularShift";
 import TodoOpenShifts from "./pages/TodoOpenShifts";
+import TodoRegularShifts from "./pages/ToDoRegularShifts"
 import AllShifts from "./pages/AllShifts";
 import EmployeeDetails from "./pages/EmployeeDetails";
+
 // import Hours from "./pages/Hours";
 
 <ToastContainer />
@@ -58,6 +60,7 @@ export default function App() {
                 <Route path="/hours/open-shifts" element={<OpenShifts />} />
                 <Route path="/timesheet" element={<Timesheet />} /> 
                 <Route path="/todo-open-shifts" element={<TodoOpenShifts />} />
+                <Route path="/todo-regular-shifts" element={<TodoRegularShifts />} />
                 <Route path="/add-account" element={<AddAccount onAddAccount={() => {}} />} />
                 {/* <Route path="/hours" element={<Hours />} /> */}
               </Route>
