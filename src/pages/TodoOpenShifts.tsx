@@ -88,8 +88,13 @@ export default function OpenShifts() {
         const response = await fetch("http://localhost:4000/attendances");
         if (!response.ok) throw new Error("Failed to fetch attendance records");
         const data: Shift[] = await response.json();
-        const sortedShifts = data
-          .filter((shift) => userId === 1 || shift.userId === userId) // Filter by userId if needed
+
+        // Fetch only shifts where the associated user's employmentType is 'Open-Shifts'
+        const filteredShifts = data
+          .filter((shift) => {
+            const user = users.find((user) => user.id === shift.userId);
+            return user?.employmentType === "Open-Shifts"; // Filter based on employmentType
+          })
           .sort((a, b) => {
             if (a.timeIn && b.timeIn) {
               return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort by timeIn descending
@@ -97,7 +102,7 @@ export default function OpenShifts() {
             return a.timeIn ? -1 : 1; // If timeIn is null, treat as older
           });
 
-        setShifts(sortedShifts);
+        setShifts(filteredShifts);
       } catch (error) {
         setError("Error fetching attendance records.");
         console.error("Error fetching attendance:", error);
@@ -109,7 +114,7 @@ export default function OpenShifts() {
     if (userId !== null) {
       fetchAttendance();
     }
-  }, [userId]);
+  }, [userId, users]); // Re-fetch when users or userId change
 
   useEffect(() => {
     const fetchActionLogs = async () => {
@@ -201,7 +206,7 @@ export default function OpenShifts() {
 
   return (
     <>
-    <PageBreadcrumb pageTitle="Home / To Do / Open Shift Logs" />
+      <PageBreadcrumb pageTitle="Home / To Do / Open Shift Logs" />
       <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
@@ -221,38 +226,38 @@ export default function OpenShifts() {
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {currentShifts.length > 0 ? (
                 currentShifts.map((shift) => {
-                    return (
-                      <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
-                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
-                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
-                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                          {shift.timeIn ? formatTime(shift.timeIn) : "-"}
-                          {shift.imageId && (
-                            <img
-                              src={`http://localhost:4000/uploads/${shift.imageId}`}
-                              alt="Time In"
-                              className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                            />
-                          )}
-                        </td>
+                  return (
+                    <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
+                        {shift.timeIn ? formatTime(shift.timeIn) : "-"}
+                        {shift.imageId && (
+                          <img
+                            src={`http://localhost:4000/uploads/${shift.imageId}`}
+                            alt="Time In"
+                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
+                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
+                          />
+                        )}
+                      </td>
 
-                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                          {shift.timeOut ? formatTime(shift.timeOut) : "-"}
-                          {shift.timeOutImageId && (
-                            <img
-                              src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
-                              alt="Time Out"
-                              className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                              style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                            />
-                          )}
-                        </td>
-                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                        <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
-                      </tr>
-                    );
-                  })
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
+                        {shift.timeOut ? formatTime(shift.timeOut) : "-"}
+                        {shift.timeOutImageId && (
+                          <img
+                            src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
+                            alt="Time Out"
+                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
+                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
+                          />
+                        )}
+                      </td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={8} className="text-center p-4">
@@ -284,51 +289,6 @@ export default function OpenShifts() {
             Next
           </button>
         </div>
-
-        {/* Shift Edit Modal */}
-        {selectedShift && (
-          <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40 flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-sm w-full text-sm">
-              <h3 className="text-lg font-semibold mb-4">Edit Shift</h3>
-              <label className="block mb-2">
-                Time In:
-                <input
-                  type="time"
-                  className="w-full border p-2 mt-1 text-sm"
-                  value={selectedShift.timeIn || ""}
-                  onChange={(e) =>
-                    setSelectedShift({ ...selectedShift, timeIn: e.target.value })
-                  }
-                />
-              </label>
-              <label className="block mb-2">
-                Time Out:
-                <input
-                  type="time"
-                  className="w-full border p-2 mt-1 text-sm"
-                  value={selectedShift.timeOut || ""}
-                  onChange={(e) =>
-                    setSelectedShift({ ...selectedShift, timeOut: e.target.value })
-                  }
-                />
-              </label>
-              <div className="flex justify-end mt-4">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded"
-                  onClick={handleUpdateShift}
-                >
-                  Submit
-                </button>
-                <button
-                  className="ml-2 bg-gray-400 text-white px-4 py-2 rounded"
-                  onClick={() => setSelectedShift(null)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <ToastContainer />
       </div>
