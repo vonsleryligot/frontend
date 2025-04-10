@@ -78,8 +78,6 @@ export default function OpenShifts() {
     }
   }, []);
   
-
-
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -103,14 +101,14 @@ export default function OpenShifts() {
         if (!response.ok) throw new Error("Failed to fetch attendance records");
         const data: Shift[] = await response.json();
         const sortedShifts = data
-          .filter((shift) => userId === 1 || shift.userId === userId) // Filter by userId if needed
+          .filter((shift) => shift.userId === userId) // Only current user's shifts
           .sort((a, b) => {
             if (a.timeIn && b.timeIn) {
-              return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort by timeIn descending
+              return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort descending
             }
-            return a.timeIn ? -1 : 1; // If timeIn is null, treat as older
+            return a.timeIn ? -1 : 1;
           });
-
+  
         setShifts(sortedShifts);
       } catch (error) {
         setError("Error fetching attendance records.");
@@ -119,7 +117,7 @@ export default function OpenShifts() {
         setLoading(false);
       }
     };
-
+  
     if (userId !== null) {
       fetchAttendance();
     }
