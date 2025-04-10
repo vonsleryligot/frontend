@@ -42,7 +42,7 @@ const ToDo: React.FC = () => {
       await axios.put(`/action-logs/${id}/reject`);
       fetchLogs(); // Refresh after rejecting
     } catch (error) {
-      console.error("Error rejecting log:", error);
+      console.error("Error rejecting log:", error); 
     }
   };
 
@@ -71,7 +71,7 @@ const ToDo: React.FC = () => {
             className="text-gray-800 dark:text-white/90 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6"
           >
             <Briefcase size={40} /> {/* Changed icon */}
-            <span className="text-lg">OpenShift</span>
+            <span className="text-lg">Open Shift</span>
           </button>
 
           <button
@@ -80,6 +80,14 @@ const ToDo: React.FC = () => {
           >
             <Briefcase size={40} /> {/* Changed icon */}
             <span className="text-lg">Regular Shift</span>
+          </button>
+
+          <button
+            onClick={() => navigate("/todo-part-time-shifts")}
+            className="text-gray-800 dark:text-white/90 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6"
+          >
+            <Briefcase size={40} /> {/* Changed icon */}
+            <span className="text-lg">Part Time Shift</span>
           </button>
         </div>
       </div>

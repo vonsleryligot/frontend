@@ -86,7 +86,7 @@ const WorkForce = () => {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Home / WorkForce" />
+      <PageBreadcrumb pageTitle="Home / Work Force" />
       <div className="overflow-x-auto p-4">
         <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">

@@ -24,12 +24,14 @@ import Payslip from "./pages/Payslip";
 import RegularShift from "./pages/RegularShift";
 import TodoOpenShifts from "./pages/TodoOpenShifts";
 import TodoRegularShifts from "./pages/ToDoRegularShifts"
+import TodoPartTimeShifts from "./pages/TodoPartTimeShifts"
 import AllShifts from "./pages/AllShifts";
 import EmployeeDetails from "./pages/EmployeeDetails";
+import PartTimeShifts from "./pages/PartTimeShifts";
 
 // import Hours from "./pages/Hours";
 
-<ToastContainer />
+<ToastContainer /> 
 
 export default function App() {
   return (
@@ -58,11 +60,12 @@ export default function App() {
                 <Route path="/shifts" element={<Calendar />} />
                 <Route path="/utilities" element={<Calendar />} />
                 <Route path="/hours/open-shifts" element={<OpenShifts />} />
+                <Route path="/hours/part-time-shifts" element={<PartTimeShifts/>} />
                 <Route path="/timesheet" element={<Timesheet />} /> 
                 <Route path="/todo-open-shifts" element={<TodoOpenShifts />} />
                 <Route path="/todo-regular-shifts" element={<TodoRegularShifts />} />
+                <Route path="/todo-part-time-shifts" element={<TodoPartTimeShifts/>} />
                 <Route path="/add-account" element={<AddAccount onAddAccount={() => {}} />} />
-                {/* <Route path="/hours" element={<Hours />} /> */}
               </Route>
             </Route>
 

@@ -81,7 +81,7 @@ const navItems: NavItem[] = [
       },
       {
         name: "Part Time",
-        path: "/hours/part-time",
+        path: "/hours/part-time-shifts",
         allowedEmploymentTypes: ["Part-Time"],
       },
       {
