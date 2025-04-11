@@ -47,11 +47,15 @@ export default function ResetPassword() {
       } else {
         setError(data.message || "Password reset failed.");
       }
-    } catch (err) {
-      setError("An error occurred while resetting your password.");
-    } finally {
-      setLoading(false);
-    }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("An error occurred while resetting your password.");
+        }
+      } finally {
+        setLoading(false);
+      }
   };
   
 

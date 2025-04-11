@@ -37,8 +37,10 @@ const EmployeeDetails = () => {
         if (!response.ok) throw new Error("Failed to fetch account details");
         const data: Account = await response.json();
         setAccount(data);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } 
       } finally {
         setLoading(false);
       }

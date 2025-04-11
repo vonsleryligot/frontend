@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { ClipLoader } from "react-spinners"; // Import the spinner
+import { ClipLoader } from "react-spinners";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -12,16 +12,15 @@ export default function Home() {
   const [hasTimedOut, setHasTimedOut] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [attendanceTimestamp, setAttendanceTimestamp] = useState<string | null>(null); // New state to store the timestamp
-  const [lastActionTime, setLastActionTime] = useState<number | null>(null); // Track the last action time (Time In or Time Out)
+  const [attendanceTimestamp, setAttendanceTimestamp] = useState<string | null>(null);
+  const [lastActionTime, setLastActionTime] = useState<number | null>(null);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    // Retrieve last action time from localStorage on component mount
     const savedLastActionTime = localStorage.getItem("lastActionTime");
     if (savedLastActionTime) {
-      setLastActionTime(Number(savedLastActionTime)); // Set it in the state
+      setLastActionTime(Number(savedLastActionTime));
     }
 
     const startCamera = async () => {
@@ -46,10 +45,16 @@ export default function Home() {
       }
     };
 
+    // Initialize camera
     startCamera();
+
+    // Set initial datetime
+    setDateTime(new Date().toLocaleString());
+
+    // Update dateTime every 5 minutes
     const interval = setInterval(() => {
       setDateTime(new Date().toLocaleString());
-    }, 5000);
+    }, 5 * 60 * 1000); // 5 minutes
 
     fetchAttendanceStatus();
 
@@ -129,64 +134,67 @@ export default function Home() {
 
   const handleAttendance = async () => {
     try {
-      // Check if the last action was less than 1 minutes ago
-      const currentTime = Date.now();
-      if (lastActionTime && currentTime - lastActionTime < 1 * 60 * 1000) {
-        toast.error("Please wait 1 minute before clicking again.");
-        return; // Prevent the action if it's within the 1-minute interval
-      }
-
       setIsProcessing(true);
       setError(null);
-
+  
+      const fiveMinutes = 5 * 60 * 1000;
+  
+      // Check if the last action was within 5 minutes
+      if (lastActionTime && Date.now() - lastActionTime < fiveMinutes) {
+        const remaining = Math.ceil((fiveMinutes - (Date.now() - lastActionTime)) / 1000);
+        toast.error(`Please wait ${Math.ceil(remaining / 60)} minute(s) before clicking again.`);
+        setIsProcessing(false);
+        return;
+      }
+  
       if (!user || !user.id) throw new Error("User is not logged in.");
-
-      const now = new Date();
+  
+      const now = new Date(); // Already declared earlier, so this is fine now
       const hours = now.getHours();
       const timestamp = now.toISOString().replace(/[:.]/g, "-");
-
+  
       const imageDataUrl = await captureImage();
       if (!imageDataUrl) throw new Error("No image captured");
-
+  
       const imageFilename = await uploadImage(imageDataUrl, timestamp);
-
+  
       let shift = "Open Shift";
       if (hours >= 6 && hours < 14) shift = "Morning";
       else if (hours >= 14 && hours < 22) shift = "Afternoon";
       else if (hours >= 22 || hours < 6) shift = "Night";
-
+  
       const res = await fetch("http://localhost:4000/attendances", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
           imageId: imageFilename,
-          shifts: shift, 
+          shifts: shift,
           time: now.toISOString(),
         }),
       });
-
+  
       if (!res.ok) {
         console.error("Failed to save attendance:", await res.text());
         throw new Error(`Failed to save attendance (Status: ${res.status})`);
       }
-
-      const currentTimestamp = now.toLocaleString(); // Save the current timestamp after successful time-in or time-out
-
-      // Set last action time to current time after a successful attendance action
-      setLastActionTime(currentTime);
-      localStorage.setItem("lastActionTime", currentTime.toString()); // Save it to localStorage
-
+  
+      const currentTimestamp = now.toLocaleString();
+  
+      // Update last action time
+      setLastActionTime(Date.now());
+      localStorage.setItem("lastActionTime", Date.now().toString());
+  
       if (!hasTimedIn) {
         setHasTimedIn(true);
         setHasTimedOut(false);
-        setAttendanceTimestamp(currentTimestamp); // Set the timestamp
+        setAttendanceTimestamp(currentTimestamp);
         localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: true, hasTimedOut: false }));
         toast.success("Time In success!");
       } else {
         setHasTimedOut(true);
         setHasTimedIn(false);
-        setAttendanceTimestamp(currentTimestamp); // Set the timestamp
+        setAttendanceTimestamp(currentTimestamp);
         localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: false, hasTimedOut: true }));
         toast.success("Time Out success!");
       }
@@ -196,17 +204,16 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  };  
 
   useEffect(() => {
-  document.body.style.overflow = "hidden"; // Hide the scrollbar globally when the component is mounted
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
 
-  return () => {
-    document.body.style.overflow = "auto"; // Reset the overflow style when the component is unmounted
-  };
-}, []);
-
- return (
+  return (
     <div className="grid grid-cols-12 gap-4 p-4 dark:bg-gray-900 dark:text-white overflow-hidden">
       <ToastContainer position="top-right" style={{ marginTop: "80px" }} />
       <div className="col-span-12 flex flex-col items-center overflow-hidden">
@@ -225,7 +232,7 @@ export default function Home() {
         <div className="mt-4 w-full flex justify-center">
           <button
             onClick={handleAttendance}
-            disabled={isProcessing} // Disable if processing
+            disabled={isProcessing}
             className="px-6 py-2 bg-blue-500 text-white rounded transition hover:bg-blue-600"
           >
             {isProcessing ? (
@@ -236,7 +243,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Show the attendance timestamp below the button */}
         {attendanceTimestamp && (
           <p className="mt-4 text-sm text-center text-gray-600 dark:text-gray-300">
             {hasTimedIn ? `Time In: ${attendanceTimestamp}` : `Time Out: ${attendanceTimestamp}`}

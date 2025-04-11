@@ -1,5 +1,7 @@
+// AddAccount.tsx
 import React, { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import Select from "react-select";
 import "react-toastify/dist/ReactToastify.css";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 
@@ -27,8 +29,8 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
     postalCode: "",
   });
 
-  const [countries, setCountries] = useState<string[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
+  const [countries, setCountries] = useState<{ label: string; value: string }[]>([]);
+  const [cities, setCities] = useState<{ label: string; value: string }[]>([]);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [userRole, setUserRole] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -48,14 +50,15 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
   useEffect(() => {
     fetch("https://restcountries.com/v3.1/all")
       .then((res) => {
-        if (!res.ok) {
-          throw new Error("Failed to fetch countries");
-        }
+        if (!res.ok) throw new Error("Failed to fetch countries");
         return res.json();
       })
       .then((data) => {
-        const countryNames = data.map((country: any) => country.name.common);
-        setCountries(countryNames.sort());
+        const countryNames = data.map((c: any) => ({
+          label: c.name.common,
+          value: c.name.common,
+        }));
+        setCountries(countryNames.sort((a: any, b: any) => a.label.localeCompare(b.label)));
       })
       .catch((error) => console.error("Error fetching countries:", error));
   }, []);
@@ -64,19 +67,29 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
     if (newAccount.country) {
       fetch("https://countriesnow.space/api/v0.1/countries/cities", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: newAccount.country }),
       })
         .then((res) => res.json())
-        .then((data) => setCities(data.data || []))
+        .then((data) => {
+          const cityOptions = (data.data || []).map((city: string) => ({
+            label: city,
+            value: city,
+          }));
+          setCities(cityOptions);
+        })
         .catch((error) => console.error("Error fetching cities:", error));
     }
   }, [newAccount.country]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    setNewAccount((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
+  const handleSelectChange = (name: string, selected: { label: string; value: string } | null) => {
+    const value = selected?.value || "";
     setNewAccount((prev) => ({ ...prev, [name]: value }));
     validateField(name, value);
   };
@@ -103,18 +116,8 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
 
   const isFormValid = () => {
     const requiredFields = [
-      "title",
-      "firstName",
-      "lastName",
-      "phone",
-      "role",
-      "employmentType",
-      "email",
-      "password",
-      "confirmPassword",
-      "country",
-      "city",
-      "postalCode",
+      "title", "firstName", "lastName", "phone", "role", "employmentType",
+      "email", "password", "confirmPassword", "country", "city", "postalCode",
     ];
     const newErrors: { [key: string]: string } = {};
 
@@ -154,14 +157,12 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
 
     try {
       setLoading(true);
-      const headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      };
-
       const response = await fetch("http://localhost:4000/accounts", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(newAccount),
       });
 
@@ -171,20 +172,14 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
       }
 
       await response.json();
-      toast.success("Added Successfully", {
-        position: "bottom-right",
-        autoClose: 2000,
-      });
+      toast.success("Added Successfully", { position: "bottom-right", autoClose: 2000 });
 
       setTimeout(() => {
         window.location.href = "/workforce";
       }, 1000);
     } catch (error) {
       console.error("Error adding account:", error);
-      toast.error("Failed to add account. Please try again.", {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
+      toast.error("Failed to add account. Please try again.", { position: "bottom-right", autoClose: 3000 });
     } finally {
       setLoading(false);
     }
@@ -196,7 +191,8 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
       <div className="p-8 rounded-xl shadow-xl w-full max-w-4xl mx-auto bg-gray-800 dark:text-gray-300">
         <h3 className="text-2xl font-semibold text-gray-100 mb-6">Add Account</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {[{ label: "Title", name: "title", type: "select", options: ["Mr", "Mrs", "Miss", "Ms"] },
+          {[
+            { label: "Title", name: "title", type: "select", options: ["Mr", "Mrs", "Miss", "Ms"] },
             { label: "First Name", name: "firstName", type: "text" },
             { label: "Last Name", name: "lastName", type: "text" },
             { label: "Phone", name: "phone", type: "text" },
@@ -206,9 +202,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
             { label: "Email", name: "email", type: "email" },
             { label: "Password", name: "password", type: "password" },
             { label: "Confirm Password", name: "confirmPassword", type: "password" },
-            { label: "Country", name: "country", type: "select", options: countries },
-            { label: "City", name: "city", type: "select", options: cities },
-            { label: "Postal Code", name: "postalCode", type: "text" }].map(({ label, name, type, options }) => (
+          ].map(({ label, name, type, options }) => (
             <div key={name} className="flex flex-col">
               <label className="font-semibold text-gray-300">{label}</label>
               {type === "select" ? (
@@ -220,9 +214,7 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
                 >
                   <option value="">Select {label}</option>
                   {options?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
+                    <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
               ) : (
@@ -230,14 +222,53 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
                   type={type}
                   name={name}
                   placeholder={label}
-                  className="border p-3 w-full bg-gray-700 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={newAccount[name as keyof typeof newAccount]}
                   onChange={handleInputChange}
+                  className="border p-3 w-full bg-gray-700 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               )}
               {errors[name] && <p className="text-red-500 text-sm mt-1">{errors[name]}</p>}
             </div>
           ))}
+
+          {/* Country dropdown */}
+          <div className="flex flex-col">
+            <label className="font-semibold text-gray-300">Country</label>
+            <Select
+              options={countries}
+              onChange={(selected) => handleSelectChange("country", selected)}
+              className="text-black"
+              placeholder="Select country"
+            />
+            {errors.country && <p className="text-red-500 text-sm mt-1">{errors.country}</p>}
+          </div>
+
+          {/* City dropdown */}
+          <div className="flex flex-col">
+            <label className="font-semibold text-gray-300">City</label>
+            <Select
+              options={cities}
+              onChange={(selected) => handleSelectChange("city", selected)}
+              className="text-black"
+              placeholder="Select city"
+              isDisabled={!newAccount.country}
+            />
+            {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+          </div>
+
+          {/* Postal Code */}
+          <div className="flex flex-col">
+            <label className="font-semibold text-gray-300">Postal Code</label>
+            <input
+              type="text"
+              name="postalCode"
+              placeholder="Postal Code"
+              value={newAccount.postalCode}
+              onChange={handleInputChange}
+              className="border p-3 w-full bg-gray-700 text-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {errors.postalCode && <p className="text-red-500 text-sm mt-1">{errors.postalCode}</p>}
+          </div>
         </div>
 
         <div className="flex justify-end space-x-6 mt-6">

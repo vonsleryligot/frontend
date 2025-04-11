@@ -13,7 +13,6 @@ interface User {
   country: string;
   city: string;
   postalCode: number;
-  loading: boolean; // Add loading here
 }
 
 interface AuthContextType {
@@ -23,6 +22,7 @@ interface AuthContextType {
   login: (userData: User, token: string) => void;
   logout: () => void;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  loading: boolean;
 }
 
 
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, setUser }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout, setUser, loading }}>
       {children}
     </AuthContext.Provider>
   );
