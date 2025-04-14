@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 interface Account {
   id: number;
   firstName: string;
   middleName: string;
   lastName: string;
-  title: string; // Assuming you have a title field in your account data
+  title: string;
   role: string;
   country: string;
   city: string;
@@ -23,15 +24,17 @@ const EmployeeDetails = () => {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAccountDetails = async () => {
       try {
-        const token = localStorage.getItem('token'); // Retrieve the token (adjust based on where you store it)
+        const token = localStorage.getItem("token");
         const response = await fetch(`http://localhost:4000/accounts/${id}`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${token}`, // Add the token to the request headers
+            Authorization: `Bearer ${token}`,
           },
         });
         if (!response.ok) throw new Error("Failed to fetch account details");
@@ -40,12 +43,29 @@ const EmployeeDetails = () => {
       } catch (err: unknown) {
         if (err instanceof Error) {
           setError(err.message);
-        } 
+        }
       } finally {
         setLoading(false);
       }
     };
-    fetchAccountDetails();
+
+    const fetchProfileImage = async () => {
+      try {
+        const response = await fetch(`http://localhost:4000/profile-uploads/${id}`);
+        if (!response.ok) throw new Error("Failed to fetch profile image");
+        const data = await response.json();
+        if (data.profile?.profile_image) {
+          setProfileImage(`http://localhost:4000${data.profile.profile_image}?${Date.now()}`);
+        }
+      } catch (err) {
+        console.error("Profile image fetch error:", err);
+      }
+    };
+
+    if (id) {
+      fetchAccountDetails();
+      fetchProfileImage();
+    }
   }, [id]);
 
   if (loading) return <p className="text-center">Loading...</p>;
@@ -57,33 +77,54 @@ const EmployeeDetails = () => {
         <>
           <div className="flex flex-col items-center mb-6">
             <img
-              src={account.profile_image 
-                ? `http://localhost:4000/profile-uploads/${account.id}` 
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(account.firstName + " " + account.lastName)}`}
+              src={
+                profileImage ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(account.firstName + " " + account.lastName)}`
+              }
               alt="Profile"
               className="w-32 h-32 rounded-full object-cover border-4 border-gray-300 dark:border-gray-600 shadow-md mb-4"
+              onError={(e) => {
+                e.currentTarget.src = "/images/default-profile.png";
+              }}
             />
+
             <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
               {account.firstName} {account.middleName} {account.lastName}
             </h3>
-            <p className="text-lg text-gray-600 dark:text-gray-400">{account.role} - {account.department}</p>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              {account.role} - {account.department}
+            </p>
           </div>
 
           <div className="space-y-3 text-base text-gray-700 dark:text-gray-300">
             <div className="flex justify-between">
-              <p><strong>Title:</strong> {account.title} {account.firstName} {account.lastName}</p>
-              <p><strong>Employment Type:</strong> {account.employmentType}</p>
+              <p>
+                <strong>Title:</strong> {account.title} {account.firstName} {account.lastName}
+              </p>
+              <p>
+                <strong>Employment Type:</strong> {account.employmentType}
+              </p>
             </div>
             <div className="flex justify-between">
-              <p><strong>Email:</strong> {account.email}</p>
-              <p><strong>Phone:</strong> {account.phone}</p>
+              <p>
+                <strong>Email:</strong> {account.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {account.phone}
+              </p>
             </div>
             <div className="flex justify-between">
-              <p><strong>Country:</strong> {account.country}</p>
-              <p><strong>City/State:</strong> {account.city}</p>
+              <p>
+                <strong>Country:</strong> {account.country}
+              </p>
+              <p>
+                <strong>City/State:</strong> {account.city}
+              </p>
             </div>
             <div className="flex justify-between">
-              <p><strong>Postal Code:</strong> {account.postalCode}</p>
+              <p>
+                <strong>Postal Code:</strong> {account.postalCode}
+              </p>
             </div>
           </div>
         </>
