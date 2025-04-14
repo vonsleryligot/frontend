@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
 interface Account {
   id: number;
@@ -24,7 +23,6 @@ const EmployeeDetails = () => {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,18 +73,21 @@ const EmployeeDetails = () => {
     <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
       {account && (
         <>
+          {/* Profile Section */}
           <div className="flex flex-col items-center mb-6">
-            <img
-              src={
-                profileImage ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(account.firstName + " " + account.lastName)}`
-              }
-              alt="Profile"
-              className="w-32 h-32 rounded-full object-cover border-4 border-gray-300 dark:border-gray-600 shadow-md mb-4"
-              onError={(e) => {
-                e.currentTarget.src = "/images/default-profile.png";
-              }}
-            />
+            <div className="relative w-32 h-32 mb-4 cursor-pointer">
+              <img
+                src={
+                  profileImage ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(account.firstName + " " + account.lastName)}`
+                }
+                alt="Profile"
+                className="w-full h-full rounded-full object-cover border-4 border-gray-300 dark:border-gray-600 shadow-md transition-transform duration-300 ease-in-out transform hover:scale-250"
+                onError={(e) => {
+                  e.currentTarget.src = "/images/default-profile.png";
+                }}
+              />
+            </div>
 
             <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">
               {account.firstName} {account.middleName} {account.lastName}
@@ -96,6 +97,7 @@ const EmployeeDetails = () => {
             </p>
           </div>
 
+          {/* Info Section */}
           <div className="space-y-3 text-base text-gray-700 dark:text-gray-300">
             <div className="flex justify-between">
               <p>
