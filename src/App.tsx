@@ -23,7 +23,7 @@ import AddAccount from "./pages/AddAccount";
 import Payslip from "./pages/Payslip";
 import RegularShift from "./pages/RegularShift";
 import TodoOpenShifts from "./pages/TodoOpenShifts";
-import TodoRegularShifts from "./pages/ToDoRegularShifts"
+import TodoRegularShifts from "./pages/TodoRegularShifts"
 import TodoPartTimeShifts from "./pages/TodoPartTimeShifts"
 import AllShifts from "./pages/AllShifts";
 import EmployeeDetails from "./pages/EmployeeDetails";
