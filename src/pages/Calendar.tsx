@@ -11,6 +11,7 @@ import PageBreadcrumb from "../components/common/PageBreadCrumb";
 interface CalendarEvent extends EventInput {
   extendedProps: {
     calendar: string;
+    eventColor: string;
   };
 }
 
@@ -54,7 +55,18 @@ const Calendar: React.FC = () => {
         }
 
         const data = await response.json();
-        setEvents(data);
+
+        // Format the events to fit FullCalendar's required structure
+        const formattedEvents = data.map((event: any) => ({
+          title: event.title,
+          start: event.startDate,
+          end: event.endDate,
+          extendedProps: {
+            calendar: event.eventColor, // Assuming `eventColor` is used for the calendar color
+          },
+        }));
+
+        setEvents(formattedEvents);
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -86,18 +98,16 @@ const Calendar: React.FC = () => {
       console.error("No token found. Cannot add or update event.");
       return;
     }
-  
+
     // Ensure startDate and endDate are valid
     if (!eventStartDate || !eventEndDate) {
       console.error("Event start and end dates are required.");
       return;
     }
-  
-    // Convert eventStartDate and eventEndDate to 'YYYY-MM-DD' format
+
     const startDate = new Date(eventStartDate).toISOString().split("T")[0];
-    const endDate = new Date(eventEndDate).toISOString().split("T")[0];    
-  
-    // Map eventLevel to eventColor
+    const endDate = new Date(eventEndDate).toISOString().split("T")[0];
+
     const eventColorMap: { [key: string]: string } = {
       Danger: "red",
       Success: "green",
@@ -105,18 +115,20 @@ const Calendar: React.FC = () => {
       Warning: "yellow",
     };
     const eventColor = eventColorMap[eventLevel] || "gray"; // Default to "gray" if no match
-  
+
     const eventData = {
       title: eventTitle,
-      startDate: startDate, // Use the 'YYYY-MM-DD' formatted date
-      endDate: endDate,     // Use the 'YYYY-MM-DD' formatted date
-      eventColor: eventColor || null, // Optional field
+      startDate: startDate,
+      endDate: endDate,
+      eventColor: eventColor || null,
     };
-  
+
     try {
+      let response;
+
       if (selectedEvent) {
         // If editing, use PUT request
-        await fetch(`http://localhost:4000/calendars/${selectedEvent.id}`, {
+        response = await fetch(`http://localhost:4000/calendars/${selectedEvent.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -126,7 +138,7 @@ const Calendar: React.FC = () => {
         });
       } else {
         // If adding, use POST request
-        const response = await fetch("http://localhost:4000/calendars", {
+        response = await fetch("http://localhost:4000/calendars", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -134,13 +146,16 @@ const Calendar: React.FC = () => {
           },
           body: JSON.stringify(eventData),
         });
-  
-        if (response.status === 403) {
-          console.error("You are not authorized to add an event.");
-          return;
-        }
       }
-  
+
+      if (!response.ok) {
+        // Handle non-OK responses
+        const errorMessage = await response.text();
+        console.error("Error adding/updating event:", errorMessage);
+        setError(errorMessage); // Set the error message for display
+        return;
+      }
+
       // Fetch updated events after adding/updating
       const updatedEventsResponse = await fetch("http://localhost:4000/calendars", {
         headers: {
@@ -148,15 +163,16 @@ const Calendar: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       const updatedEvents = await updatedEventsResponse.json();
       setEvents(updatedEvents);
       closeModal();
       resetModalFields();
     } catch (error) {
       console.error("Error adding/updating event:", error);
+      setError("Something went wrong. Please try again."); // Show a user-friendly error
     }
-  };     
+  };
 
   const resetModalFields = () => {
     setEventTitle("");
