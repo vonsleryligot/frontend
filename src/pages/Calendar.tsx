@@ -11,7 +11,6 @@ import PageBreadcrumb from "../components/common/PageBreadCrumb";
 interface CalendarEvent extends EventInput {
   extendedProps: {
     calendar: string;
-    eventColor: string;
   };
 }
 
@@ -25,13 +24,6 @@ const Calendar: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
-
-  const calendarsEvents = {
-    Danger: "danger",
-    Success: "success",
-    Primary: "primary",
-    Warning: "warning",
-  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -56,17 +48,21 @@ const Calendar: React.FC = () => {
 
         const data = await response.json();
 
-        // Format the events to fit FullCalendar's required structure
-        const formattedEvents = data.map((event: any) => ({
-          title: event.title,
-          start: event.startDate,
-          end: event.endDate,
-          extendedProps: {
-            calendar: event.eventColor, // Assuming `eventColor` is used for the calendar color
-          },
-        }));
+        let eventsToSet: CalendarEvent[] = [];
 
-        setEvents(formattedEvents);
+        if (data.length > 0) {
+          eventsToSet = data.map((event: any) => ({
+            id: event.id,
+            title: event.title,
+            start: event.startDate,
+            end: event.endDate,
+            extendedProps: {
+              calendar: event.eventColor,
+            },
+          }));
+        }
+
+        setEvents(eventsToSet);
       } catch (error) {
         console.error("Error fetching events:", error);
       }
@@ -98,36 +94,34 @@ const Calendar: React.FC = () => {
       console.error("No token found. Cannot add or update event.");
       return;
     }
-
-    // Ensure startDate and endDate are valid
+  
     if (!eventStartDate || !eventEndDate) {
       console.error("Event start and end dates are required.");
       return;
     }
-
+  
     const startDate = new Date(eventStartDate).toISOString().split("T")[0];
     const endDate = new Date(eventEndDate).toISOString().split("T")[0];
-
+  
     const eventColorMap: { [key: string]: string } = {
       Danger: "red",
       Success: "green",
       Primary: "blue",
       Warning: "yellow",
     };
-    const eventColor = eventColorMap[eventLevel] || "gray"; // Default to "gray" if no match
-
+    const eventColor = eventColorMap[eventLevel] || "gray";
+  
     const eventData = {
       title: eventTitle,
       startDate: startDate,
       endDate: endDate,
       eventColor: eventColor || null,
     };
-
+  
     try {
       let response;
-
+  
       if (selectedEvent) {
-        // If editing, use PUT request
         response = await fetch(`http://localhost:4000/calendars/${selectedEvent.id}`, {
           method: "PUT",
           headers: {
@@ -137,7 +131,6 @@ const Calendar: React.FC = () => {
           body: JSON.stringify(eventData),
         });
       } else {
-        // If adding, use POST request
         response = await fetch("http://localhost:4000/calendars", {
           method: "POST",
           headers: {
@@ -147,33 +140,25 @@ const Calendar: React.FC = () => {
           body: JSON.stringify(eventData),
         });
       }
-
+  
       if (!response.ok) {
-        // Handle non-OK responses
         const errorMessage = await response.text();
         console.error("Error adding/updating event:", errorMessage);
-        setError(errorMessage); // Set the error message for display
+        setError(errorMessage);
         return;
       }
-
-      // Fetch updated events after adding/updating
-      const updatedEventsResponse = await fetch("http://localhost:4000/calendars", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const updatedEvents = await updatedEventsResponse.json();
-      setEvents(updatedEvents);
+  
+      // Reload the page after adding/updating event
+      window.location.reload(); // Add this line to reload the page
+  
       closeModal();
       resetModalFields();
     } catch (error) {
       console.error("Error adding/updating event:", error);
-      setError("Something went wrong. Please try again."); // Show a user-friendly error
+      setError("Something went wrong. Please try again.");
     }
   };
-
+  
   const resetModalFields = () => {
     setEventTitle("");
     setEventStartDate("");
@@ -185,7 +170,7 @@ const Calendar: React.FC = () => {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Calendar" />
+      <PageBreadcrumb pageTitle="Home / Shift / Calendar" />
       <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="custom-calendar">
           <FullCalendar
@@ -242,30 +227,6 @@ const Calendar: React.FC = () => {
               </div>
 
               <div className="mt-6">
-                <label className="block mb-4 text-sm font-medium text-gray-700 dark:text-gray-400">
-                  Event Color
-                </label>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-                  {Object.entries(calendarsEvents).map(([key, value]) => (
-                    <label key={key} className="flex items-center text-sm text-gray-700 dark:text-gray-400">
-                      <input
-                        type="radio"
-                        name="event-level"
-                        value={key}
-                        checked={eventLevel === key}
-                        onChange={() => setEventLevel(key)}
-                        className="sr-only"
-                      />
-                      <span className="flex items-center justify-center w-5 h-5 mr-2 border border-gray-300 rounded-full box dark:border-gray-700">
-                        <span className={`h-2 w-2 rounded-full bg-white ${eventLevel === key ? "block" : "hidden"}`} />
-                      </span>
-                      {key}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-6">
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                   Enter Start Date
                 </label>
@@ -314,12 +275,20 @@ const Calendar: React.FC = () => {
 };
 
 const renderEventContent = (eventInfo: any) => {
-  const colorClass = `fc-bg-${eventInfo.event.extendedProps.calendar?.toLowerCase()}`;
+  const colorMap: { [key: string]: string } = {
+    Danger: "bg-red-500",
+    Success: "bg-green-500",
+    Primary: "bg-blue-500",
+    Warning: "bg-yellow-500",
+  };
+
+  const colorClass = colorMap[eventInfo.event.extendedProps.calendar] || "bg-gray-500";
+
   return (
-    <div className={`event-fc-color flex fc-event-main ${colorClass} p-1 rounded-sm`}>
-      <div className="fc-daygrid-event-dot"></div>
-      <div className="fc-event-time">{eventInfo.timeText}</div>
-      <div className="fc-event-title">{eventInfo.event.title}</div>
+    <div className={`flex items-center space-x-1 text-white px-2 py-1 rounded ${colorClass}`}>
+      <div className="w-2 h-2 rounded-full bg-white"></div>
+      <div className="text-xs">{eventInfo.timeText}</div>
+      <div className="text-xs font-semibold">{eventInfo.event.title}</div>
     </div>
   );
 };
