@@ -23,14 +23,14 @@ interface User {
   employmentType?: string;
 }
 
-interface ActionLog {
-  id: number;
-  shiftId: number;
-  userId: number;
-  timeIn: string;
-  timeOut: string;
-  status: string;
-}
+// interface ActionLog {
+//   id: number;
+//   shiftId: number;
+//   userId: number;
+//   timeIn: string;
+//   timeOut: string;
+//   status: string;
+// }
 
 export default function OpenShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -39,19 +39,19 @@ export default function OpenShifts() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
-  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
-  const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
+  // const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+  // const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
+  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
 
-  const handleImageClick = (imageUrl: string) => {
-    setModalImage(imageUrl);
-    setIsModalOpen(true);
-  };
+  // const handleImageClick = (imageUrl: string) => {
+  //   setModalImage(imageUrl);
+  //   setIsModalOpen(true);
+  // };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setModalImage(null);
-  };
+  // const closeModal = () => {
+  //   setIsModalOpen(false);
+  //   setModalImage(null);
+  // };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -123,19 +123,19 @@ export default function OpenShifts() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    const fetchActionLogs = async () => {
-      try {
-        const response = await fetch("http://localhost:4000/action-logs");
-        if (!response.ok) throw new Error("Failed to fetch action logs");
-        const data: ActionLog[] = await response.json();
-        setActionLogs(data);
-      } catch (error) {
-        console.error("Error fetching action logs:", error);
-      }
-    };
-    fetchActionLogs();
-  }, []);
+  // useEffect(() => {
+  //   const fetchActionLogs = async () => {
+  //     try {
+  //       const response = await fetch("http://localhost:4000/action-logs");
+  //       if (!response.ok) throw new Error("Failed to fetch action logs");
+  //       const data: ActionLog[] = await response.json();
+  //       setActionLogs(data);
+  //     } catch (error) {
+  //       console.error("Error fetching action logs:", error);
+  //     }
+  //   };
+  //   fetchActionLogs();
+  // }, []);
 
   const formatTime = (datetime: string) => {
     const date = new Date(datetime);

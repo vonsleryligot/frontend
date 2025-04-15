@@ -17,6 +17,19 @@ interface TimesheetEntry {
   status: string;
 }
 
+interface RawTimesheetEntry {
+  id: number;
+  account?: {
+    firstName: string;
+    lastName: string;
+  };
+  details?: string;
+  timeInImage?: string;
+  timeOutImage?: string;
+  status?: string;
+}
+
+
 const Timesheet: React.FC = () => {
   const [timesheetData, setTimesheetData] = useState<TimesheetEntry[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
@@ -36,23 +49,24 @@ const Timesheet: React.FC = () => {
           limit: itemsPerPage,
         },
       });
-
-      // Log the raw API response to check its structure
+  
       console.log("Raw API Response:", response.data);
-
-      // Assuming response.data is an array of timesheet entries
-      const formattedData = response.data.map((entry: any) => {
+  
+      const rawData = response.data.data || response.data; // fallback if array
+      const total = response.data.total || rawData.length;
+  
+      const formattedData = rawData.map((entry: RawTimesheetEntry) => {
         const user = entry.account
           ? { firstName: entry.account.firstName, lastName: entry.account.lastName }
           : { firstName: "Unknown", lastName: "" };
-
+  
         const timeMatch = entry.details?.match(/Time In - (.*?), Time Out - (.*)/);
         const timeIn = timeMatch ? timeMatch[1] : null;
         const timeOut = timeMatch ? timeMatch[2] : null;
-
+  
         const timeInImage = entry.timeInImage || null;
         const timeOutImage = entry.timeOutImage || null;
-
+  
         return {
           id: entry.id,
           user,
@@ -60,13 +74,14 @@ const Timesheet: React.FC = () => {
           status: entry.status || "N/A",
         };
       });
-
-      // Update state with formatted data
+  
       setTimesheetData(formattedData);
+      setTotalPages(Math.ceil(total / itemsPerPage)); // this is important!
     } catch (error) {
       console.error("Error fetching timesheet data:", error);
     }
   };
+  
 
   const handleApprove = async (id: number) => {
     setLoadingId(id);
