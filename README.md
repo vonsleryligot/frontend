@@ -28,7 +28,7 @@ This is the frontend application for the Payroll System, built with **React**, *
 ```bash
 # Clone the repository
 git clone https://github.com/vonsleryligot/frontend.git
-cd frontend
+
 
 # Install dependencies
 npm install
