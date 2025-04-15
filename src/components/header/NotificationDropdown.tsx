@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
-import { Link } from "react-router-dom"; // Use react-router-dom for routing
 
 interface Event {
   id: number;
@@ -87,7 +86,7 @@ export default function NotificationDropdown() {
       >
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 dark:border-gray-700">
           <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-            Upcoming Events
+            Notifications
           </h5>
           <button
             onClick={toggleDropdown}
@@ -112,7 +111,7 @@ export default function NotificationDropdown() {
 
         <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
           {events.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400">No upcoming events</p>
+            <p className="text-center text-gray-500 dark:text-gray-400">No Notification</p>
           ) : (
             events.map((event) => (
               <li key={event.id}>
@@ -124,20 +123,13 @@ export default function NotificationDropdown() {
                     {event.title}
                   </span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
-                    From {event.startDate} to {event.endDate}
+                    Event was added: "{event.title}"
                   </span>
                 </DropdownItem>
               </li>
             ))
           )}
         </ul>
-
-        <Link
-          to="/calendar"
-          className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-        >
-          View Full Calendar
-        </Link>
       </Dropdown>
     </div>
   );

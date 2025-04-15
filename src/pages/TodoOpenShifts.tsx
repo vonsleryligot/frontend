@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 
@@ -23,36 +23,12 @@ interface User {
   employmentType?: string;
 }
 
-interface ActionLog {
-  id: number;
-  shiftId: number;
-  userId: number;
-  timeIn: string;
-  timeOut: string;
-  status: string;
-}
-
 export default function OpenShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
-  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
-
-  const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
-
-  const handleImageClick = (imageUrl: string) => {
-    setModalImage(imageUrl);
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setModalImage(null);
-  };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -116,20 +92,6 @@ export default function OpenShifts() {
     }
   }, [userId, users]); // Re-fetch when users or userId change
 
-  useEffect(() => {
-    const fetchActionLogs = async () => {
-      try {
-        const response = await fetch("http://localhost:4000/action-logs");
-        if (!response.ok) throw new Error("Failed to fetch action logs");
-        const data: ActionLog[] = await response.json();
-        setActionLogs(data);
-      } catch (error) {
-        console.error("Error fetching action logs:", error);
-      }
-    };
-    fetchActionLogs();
-  }, []);
-
   const formatTime = (datetime: string) => {
     const date = new Date(datetime);
     if (isNaN(date.getTime())) return "12:00 AM";
@@ -138,49 +100,6 @@ export default function OpenShifts() {
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
     return `${hours}:${minutes} ${ampm}`;
-  };
-
-  const handleUpdateShift = async () => {
-    if (!selectedShift || !selectedShift.id) return;
-
-    try {
-      const shiftDate = selectedShift.date;
-      const formattedTimeIn = `${shiftDate}T${selectedShift.timeIn}`;
-      const formattedTimeOut = `${shiftDate}T${selectedShift.timeOut}`;
-
-      const actionLogResponse = await fetch("http://localhost:4000/action-logs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shiftId: selectedShift.id,
-          userId: selectedShift.userId,
-          timeIn: formattedTimeIn,
-          timeOut: formattedTimeOut,
-          status: "pending",
-        }),
-      });
-
-      const actionLogData = await actionLogResponse.json();
-      if (!actionLogResponse.ok) {
-        throw new Error(actionLogData.message || "Failed to create action log");
-      }
-
-      toast.success("Shift update request submitted!", {
-        position: "bottom-right",
-        autoClose: 3000,
-      });
-
-      setShifts((prev) =>
-        prev.map((shift) =>
-          shift.id === selectedShift.id ? { ...shift, status: "pending" } : shift
-        )
-      );
-
-      setSelectedShift(null);
-    } catch (error) {
-      console.error("Error creating action log:", error);
-      toast.error("Something went wrong. Please try again.");
-    }
   };
 
   const getUserFullName = (userId: number) => {
@@ -289,7 +208,6 @@ export default function OpenShifts() {
             Next
           </button>
         </div>
-
         <ToastContainer />
       </div>
     </>

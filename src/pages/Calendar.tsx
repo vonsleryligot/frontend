@@ -3,7 +3,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { EventInput, DateSelectArg, EventClickArg } from "@fullcalendar/core";
+import { EventInput, DateSelectArg, EventClickArg, EventContentArg  } from "@fullcalendar/core";
 import { Modal } from "../components/ui/modal";
 import { useModal } from "../hooks/useModal";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
@@ -12,6 +12,14 @@ interface CalendarEvent extends EventInput {
   extendedProps: {
     calendar: string;
   };
+}
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  eventColor: string;
 }
 
 const Calendar: React.FC = () => {
@@ -52,7 +60,7 @@ const Calendar: React.FC = () => {
         let eventsToSet: CalendarEvent[] = [];
 
         if (data.length > 0) {
-          eventsToSet = data.map((event: any) => ({
+          eventsToSet = data.map((event: CalendarEvent) => ({
             id: event.id,
             title: event.title,
             start: event.startDate,
@@ -63,7 +71,7 @@ const Calendar: React.FC = () => {
             },
           }));
         }
-
+        
         setEvents(eventsToSet);
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -308,7 +316,7 @@ const Calendar: React.FC = () => {
   );
 };
 
-const renderEventContent = (eventInfo: any) => {
+const renderEventContent = (eventInfo: EventContentArg) => {
   const colorMap: { [key: string]: string } = {
     Danger: "bg-red-500",
     Success: "bg-green-500",

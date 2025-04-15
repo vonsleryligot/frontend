@@ -8,11 +8,11 @@ import PageBreadcrumb from "../components/common/PageBreadCrumb";
 const roles = ["Admin", "User"];
 const department = ["Accountant", "IT", "Associate", "Operations"];
 
-interface AddAccountProps {
-  onAddAccount: (account: any) => void;
-}
+// interface AddAccountProps {
+//   onAddAccount: (account: any) => void;
+// }
 
-const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
+const AddAccount: React.FC = () => {
   const [newAccount, setNewAccount] = useState({
     title: "",
     firstName: "",
@@ -47,21 +47,28 @@ const AddAccount: React.FC<AddAccountProps> = ({ onAddAccount }) => {
     }
   }, []);
 
+  interface Country {
+    name: {
+      common: string;
+    };
+  }
+  
   useEffect(() => {
     fetch("https://restcountries.com/v3.1/all")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch countries");
         return res.json();
       })
-      .then((data) => {
-        const countryNames = data.map((c: any) => ({
+      .then((data: Country[]) => {
+        const countryNames = data.map((c) => ({
           label: c.name.common,
           value: c.name.common,
         }));
-        setCountries(countryNames.sort((a: any, b: any) => a.label.localeCompare(b.label)));
+        setCountries(countryNames.sort((a, b) => a.label.localeCompare(b.label)));
       })
       .catch((error) => console.error("Error fetching countries:", error));
   }, []);
+  
 
   useEffect(() => {
     if (newAccount.country) {

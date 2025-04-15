@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 // Backend API URL (update if your backend runs on a different port)
 const API_URL = "http://localhost:4000";
@@ -35,8 +35,14 @@ export const signIn = async (email: string, password: string) => {
     }
 
     return response.data;
-  } catch (error: any) {
-    console.error("Login Error:", error.response?.data || error.message);
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      console.error("Login Error:", error.response?.data || error.message);
+    } else if (error instanceof Error) {
+      console.error("Login Error:", error.message);
+    } else {
+      console.error("Unknown error occurred during login:", error);
+    }
     throw error;
   }
 };
@@ -63,9 +69,17 @@ export const signUp = async (data: {
     const response = await api.post("/accounts/register", data);
     console.log("SignUp Response:", response.data);
     return response.data;
-  } catch (error: any) {
-    console.error("Signup Error:", error.response?.data || error.message);
-    throw error;
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      console.error("Signup Error:", error.response?.data || error.message);
+      throw error;
+    } else if (error instanceof Error) {
+      console.error("Signup Error:", error.message);
+      throw error;
+    } else {
+      console.error("Unknown error occurred during signup:", error);
+      throw error;
+    }
   }
 };
 

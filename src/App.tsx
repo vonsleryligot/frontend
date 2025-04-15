@@ -28,6 +28,7 @@ import TodoPartTimeShifts from "./pages/TodoPartTimeShifts"
 import AllShifts from "./pages/AllShifts";
 import EmployeeDetails from "./pages/EmployeeDetails";
 import PartTimeShifts from "./pages/PartTimeShifts";
+import TodoApprenticeshipShifts from "./pages/TodoApprenticeshipShifts"
 import ApprenticeshipShifts from "./pages/Apprenticeship";
 
 // import Hours from "./pages/Hours";
@@ -53,10 +54,11 @@ export default function App() {
                 <Route path="/todo" element={<ToDo />} />
                 <Route path="/open-shifts" element={<OpenShifts />} />
                 <Route path="/hours/regular-shifts" element={<RegularShift />} />
+                <Route path="/hours/apprenticeship-shifts" element={<ApprenticeshipShifts/>} />
                 <Route path="/hours/all-shifts" element={<AllShifts/>} />
                 <Route path="/workforce" element={<Workforce />} />
                 <Route path="/employee-details/:id" element={<EmployeeDetails />} />
-                <Route path="/leaves" element={<Leave />} />
+                <Route path="/leaves" element={<Leave leaveTypes={[]} leaveHistory={[]} />} />
                 <Route path="/paycheck/payslip" element={<Payslip/>} />
                 <Route path="/shifts" element={<Calendar />} />
                 <Route path="/utilities" element={<Calendar />} />
@@ -66,8 +68,8 @@ export default function App() {
                 <Route path="/todo-open-shifts" element={<TodoOpenShifts />} />
                 <Route path="/todo-regular-shifts" element={<TodoRegularShifts />} />
                 <Route path="/todo-part-time-shifts" element={<TodoPartTimeShifts/>} />
-                <Route path="/todo-apprenticeship-shifts" element={<ApprenticeshipShifts/>} />
-                <Route path="/add-account" element={<AddAccount onAddAccount={() => {}} />} />
+                <Route path="/todo-apprenticeship-shifts" element={<TodoApprenticeshipShifts/>} />
+                <Route path="/add-account" element={<AddAccount />} />
               </Route>
             </Route>
 

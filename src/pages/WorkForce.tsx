@@ -51,7 +51,7 @@ const WorkForce = () => {
       const response = await fetch(`http://localhost:4000/accounts`);
       if (!response.ok) throw new Error(`Failed to fetch accounts`);
       const data: Account[] = await response.json();
-
+  
       const accountsWithImages = await Promise.all(
         data.map(async (account) => {
           try {
@@ -64,14 +64,18 @@ const WorkForce = () => {
           }
         })
       );
-
+  
       setAccounts(accountsWithImages);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   // Pagination Logic
   const indexOfLastAccount = currentPage * itemsPerPage;

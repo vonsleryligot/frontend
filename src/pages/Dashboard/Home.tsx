@@ -18,7 +18,7 @@ export default function Home() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    const savedLastActionTime = localStorage.getItem("lastActionTime");
+    const savedLastActionTime = localStorage.getItem(`lastActionTime-${user.id}`);
     if (savedLastActionTime) {
       setLastActionTime(Number(savedLastActionTime));
     }
@@ -90,7 +90,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const savedStatus = JSON.parse(localStorage.getItem("attendanceStatus") || "{}");
+    const savedStatus = JSON.parse(localStorage.getItem(`attendanceStatus-${user.id}`) || "{}");
     if (savedStatus) {
       setHasTimedIn(savedStatus.hasTimedIn || false);
       setHasTimedOut(savedStatus.hasTimedOut || false);
@@ -137,7 +137,7 @@ export default function Home() {
       setIsProcessing(true);
       setError(null);
   
-      const fiveMinutes = 5 * 60 * 1000;
+      const fiveMinutes = 1 * 60 * 1000;
   
       // Check if the last action was within 5 minutes
       if (lastActionTime && Date.now() - lastActionTime < fiveMinutes) {
@@ -182,21 +182,31 @@ export default function Home() {
       const currentTimestamp = now.toLocaleString();
   
       // Update last action time
-      setLastActionTime(Date.now());
-      localStorage.setItem("lastActionTime", Date.now().toString());
+      const currentTime = Date.now();
+      setLastActionTime(currentTime);
+      localStorage.setItem(`lastActionTime-${user.id}`, currentTime.toString());
+      
   
       if (!hasTimedIn) {
+        toast.success("Time In success!"); // Show toast first
         setHasTimedIn(true);
         setHasTimedOut(false);
         setAttendanceTimestamp(currentTimestamp);
-        localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: true, hasTimedOut: false }));
-        toast.success("Time In success!");
+        localStorage.setItem(
+          `attendanceStatus-${user.id}`,
+          JSON.stringify({ hasTimedIn: true, hasTimedOut: false })
+        );
+        
       } else {
+        toast.success("Time Out success!"); // Show toast first
         setHasTimedOut(true);
         setHasTimedIn(false);
         setAttendanceTimestamp(currentTimestamp);
-        localStorage.setItem("attendanceStatus", JSON.stringify({ hasTimedIn: false, hasTimedOut: true }));
-        toast.success("Time Out success!");
+        localStorage.setItem(
+          `attendanceStatus-${user.id}`,
+          JSON.stringify({ hasTimedIn: false, hasTimedOut: true })
+        );
+        
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unexpected error.");

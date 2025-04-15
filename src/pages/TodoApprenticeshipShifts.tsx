@@ -23,13 +23,14 @@ interface User {
   employmentType?: string;
 }
 
-export default function RegularShifts() {
+export default function ApprenticeshipShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
@@ -39,6 +40,7 @@ export default function RegularShifts() {
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setUserId(user.id);
+      setUserRole(user.role);
     }
   }, []);
 
@@ -61,24 +63,52 @@ export default function RegularShifts() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("http://localhost:4000/attendances");
-        if (!response.ok) throw new Error("Failed to fetch attendance records");
-        const data: Shift[] = await response.json();
-
-        // Fetch only shifts where the associated user's employmentType is 'Regular'
-        const filteredShifts = data
-          .filter((shift) => {
-            const user = users.find((user) => user.id === shift.userId);
-            return user?.employmentType === "Regular"; // Filter based on employmentType
-          })
-          .sort((a, b) => {
-            if (a.timeIn && b.timeIn) {
-              return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort by timeIn descending
-            }
-            return a.timeIn ? -1 : 1; // If timeIn is null, treat as older
-          });
-
-        setShifts(filteredShifts);
+  
+        const [attendanceRes, usersRes] = await Promise.all([
+          fetch("http://localhost:4000/attendances"),
+          fetch("http://localhost:4000/accounts"),
+        ]);
+  
+        if (!attendanceRes.ok || !usersRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
+  
+        const attendanceData: Shift[] = await attendanceRes.json();
+        const usersData: User[] = await usersRes.json();
+  
+        setUsers(usersData); // make sure we have user info
+  
+        // Filter: Apprenticeship only
+        const apprenticeshipUserIds = usersData
+          .filter((user) => user.employmentType === "Apprenticeship")
+          .map((user) => user.id);
+  
+        let filteredShifts: Shift[];
+  
+        if (userRole === "Admin") {
+          // Admin sees all Apprenticeship users
+          filteredShifts = attendanceData.filter((shift) =>
+            apprenticeshipUserIds.includes(shift.userId)
+          );
+        } else if (userId !== null) {
+          // Non-admin users only see their own attendance (if they are Apprenticeship)
+          filteredShifts = attendanceData.filter(
+            (shift) =>
+              shift.userId === userId &&
+              apprenticeshipUserIds.includes(shift.userId)
+          );
+        } else {
+          filteredShifts = [];
+        }
+  
+        const sortedShifts = filteredShifts.sort((a, b) => {
+          if (a.timeIn && b.timeIn) {
+            return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
+          }
+          return a.timeIn ? -1 : 1;
+        });
+  
+        setShifts(sortedShifts);
       } catch (error) {
         setError("Error fetching attendance records.");
         console.error("Error fetching attendance:", error);
@@ -86,11 +116,11 @@ export default function RegularShifts() {
         setLoading(false);
       }
     };
-
+  
     if (userId !== null) {
       fetchAttendance();
     }
-  }, [userId, users]); // Re-fetch when users or userId change
+  }, [userId, userRole]);
 
   const formatTime = (datetime: string) => {
     const date = new Date(datetime);
@@ -125,8 +155,8 @@ export default function RegularShifts() {
 
   return (
     <>
-      <PageBreadcrumb pageTitle="Home / To Do / Regular Logs" />
-      <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+      <PageBreadcrumb pageTitle="Home / To Do / Apprenticeship" />
+      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
@@ -208,8 +238,8 @@ export default function RegularShifts() {
             Next
           </button>
         </div>
-        <ToastContainer />
       </div>
+      <ToastContainer />
     </>
   );
 }
