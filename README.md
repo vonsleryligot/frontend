@@ -1,4 +1,4 @@
-# Frontend Payroll System
+# Payroll System - Frontend
 
 This is the frontend application for the Payroll System, built with **React**, **TypeScript**, and **TailwindCSS**. It handles employee-facing and admin-facing features such as attendance tracking, leave management, shift management, and payslip viewing.
 
