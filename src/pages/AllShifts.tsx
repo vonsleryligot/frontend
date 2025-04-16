@@ -56,7 +56,7 @@ export default function AllShifts() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
