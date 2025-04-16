@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
-import { forgotPassword } from "../../api";
+import { forgotPassword,  } from "../../api";
+import { AxiosError } from "axios";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -32,13 +33,15 @@ export default function ForgotPasswordForm() {
     try {
       await forgotPassword(email);
       setSuccessMessage("A password reset link has been sent to your email.");
-    } catch (err: any) {
-      console.error("Forgot password error:", err.response?.data || err.message);
-      setError(err.response?.data?.message || "Failed to send reset link");
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      console.error("Forgot password error:", error.response?.data || error.message);
+      setError(error.response?.data?.message || "Failed to send reset link");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="flex flex-col flex-1 w-full overflow-y-auto lg:w-1/2 no-scrollbar">
@@ -132,11 +135,11 @@ function ResetPasswordForm({ token }: { token: string }) {
       } else {
         setError(data.message || "Password reset failed.");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred while resetting your password.");
     } finally {
       setLoading(false);
-    }
+    }    
   };
 
   return (
