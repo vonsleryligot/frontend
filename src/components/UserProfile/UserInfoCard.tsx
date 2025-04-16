@@ -5,7 +5,7 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
-import { toast } from "react-toastify"; // Optional: Add toast for feedback
+import { toast } from "react-toastify";
 
 export default function UserInfoCard() {
   const { isOpen, openModal, closeModal } = useModal();
