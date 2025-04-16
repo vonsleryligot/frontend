@@ -6,7 +6,9 @@ import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
 import { signIn } from "../../api";
-import { useAuth } from "../../context/AuthContext"; // Import Auth Context
+import { useAuth } from "../../context/AuthContext";
+import { AxiosError } from "axios";
+
 
 export default function SignInForm() {
   const { login } = useAuth(); //  Get login function from context
@@ -43,11 +45,10 @@ export default function SignInForm() {
       } else {
         setError("Authentication failed, please try again.");
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid email or password.");
-    } finally {
-      setLoading(false); // Reset loading state after request finishes
-    }
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      setError(error.response?.data?.message || "Invalid email or password.");
+    }    
   };
   
   return (
