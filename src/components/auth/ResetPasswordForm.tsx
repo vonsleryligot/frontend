@@ -57,7 +57,6 @@ export default function ResetPassword() {
         setLoading(false);
       }
   };
-  
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white dark:bg-gray-900">
@@ -108,6 +107,4 @@ export default function ResetPassword() {
       </form>
     </div>
   );
-  
-
 }
