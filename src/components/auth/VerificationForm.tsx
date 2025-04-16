@@ -4,23 +4,24 @@ import api from "../../api";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Button from "../ui/button/Button";
+import { AxiosError } from "axios";
 
 export default function VerificationForm() {
   const [verificationToken, setVerificationToken] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendCountdown, setResendCountdown] = useState(0);
+
   const navigate = useNavigate();
   const location = useLocation();
   const email = new URLSearchParams(location.search).get("email");
 
-  console.log("Email for resend:", email); // Debugging log
-
   useEffect(() => {
     if (resendCountdown > 0) {
-      const timer = setTimeout(() => setResendCountdown(resendCountdown - 1), 1000);
+      const timer = setTimeout(() => setResendCountdown((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [resendCountdown]);
@@ -29,13 +30,15 @@ export default function VerificationForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
 
     try {
-      await api.post("/accounts/verify-email", { token: verificationToken });
-      alert("Verification successful! You can now log in.");
-      navigate("/signin");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid verification token.");
+      await api.post("/accounts/verify-email", { token: verificationToken.trim() });
+      setSuccess("Verification successful! You can now log in.");
+      setTimeout(() => navigate("/signin"), 1500);
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      setError(error.response?.data?.message || "Invalid verification token.");
     } finally {
       setLoading(false);
     }
@@ -47,18 +50,19 @@ export default function VerificationForm() {
       return;
     }
 
-    if (resendCountdown > 0) return; // Prevent spamming resend
+    if (resendCountdown > 0) return;
 
     setResending(true);
     setError("");
     setResendMessage("");
 
     try {
-      await api.post("/accounts/resend-verification-email", { email });
+      await api.post("/accounts/resend-verification", { email }); // endpoint name fixed
       setResendMessage("A new verification email has been sent.");
-      setResendCountdown(30); // 30-second cooldown
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to resend verification email.");
+      setResendCountdown(30);
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      setError(error.response?.data?.message || "Failed to resend verification email.");
     } finally {
       setResending(false);
     }
@@ -87,6 +91,7 @@ export default function VerificationForm() {
               />
             </div>
             {error && <p className="text-error-500 text-sm">{error}</p>}
+            {success && <p className="text-success-500 text-sm">{success}</p>}
             {resendMessage && <p className="text-success-500 text-sm">{resendMessage}</p>}
             <div>
               <Button className="w-full" size="sm" data-type="submit" disabled={loading}>
@@ -103,7 +108,11 @@ export default function VerificationForm() {
               disabled={resending || resendCountdown > 0}
               className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
             >
-              {resending ? "Resending..." : resendCountdown > 0 ? `Resend in ${resendCountdown}s` : "Resend"}
+              {resending
+                ? "Resending..."
+                : resendCountdown > 0
+                ? `Resend in ${resendCountdown}s`
+                : "Resend"}
             </button>
           </p>
         </div>
