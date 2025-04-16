@@ -14,7 +14,6 @@ export default function UserMetaCard() {
 
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [passwordFormData, setPasswordFormData] = useState({
-    // oldPassword: "",
     password: "",
     confirmPassword: "",
   });
@@ -83,11 +82,13 @@ export default function UserMetaCard() {
   const handleResetPassword = async () => {
     const { password, confirmPassword } = passwordFormData;
   
+    // Check if both fields are filled
     if (!password || !confirmPassword) {
       toast.error("All fields are required.");
       return;
     }
   
+    // Ensure passwords match
     if (password !== confirmPassword) {
       toast.error("Passwords do not match!");
       return;
@@ -95,63 +96,61 @@ export default function UserMetaCard() {
   
     setLoading(true);
   
+    // Get token and user ID
     const token = localStorage.getItem("token");
-    console.log("Token:", token); // Check token format and expiry
-    if (!token) {
-      toast.error("Unauthorized: No token found");
+    if (!token || !user?.id) {
+      toast.error("Unauthorized: Missing token or user ID");
+      setLoading(false);
       return;
     }
   
     try {
-      const requestData = {
-        password,
-        confirmPassword,
-        token, // Include the token here in the request body
-      };
+      // Prepare the request data, now including both 'password' and 'confirmPassword'
+      const requestData = { password, confirmPassword };
   
-      console.log("Request Data:", requestData);
+      console.log("Request data:", requestData); // Debugging: log the data being sent
   
-      const response = await axios.post(
-        "http://localhost:4000/accounts/reset-password",
-        requestData, // Send the requestData object directly
+      const response = await axios.put(
+        `http://localhost:4000/accounts/${user.id}`,
+        requestData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,  // Send token for authorization
           },
         }
       );
   
-      console.log("Server Response:", response.data);
-      toast.success("Password reset successful!");
-      setTimeout(() => setPasswordModalOpen(false), 1500);
+      console.log("Backend response:", response); // Debugging: log the backend response
   
+      if (response.status === 200) {
+        toast.success("Password updated successfully!");
+        setPasswordModalOpen(false);  // Close modal after success
+        setPasswordFormData({ password: "", confirmPassword: "" });  // Reset form data
+      } else {
+        toast.error("Password update failed, please try again.");
+      }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const message = err.response?.data?.message || err.message;
         toast.error(`Error: ${message}`);
-        console.log("Axios Error Response:", err.response?.data);
+        console.log("Axios Error Response:", err.response?.data);  // Debugging
       } else if (err instanceof Error) {
         toast.error(err.message);
       } else {
-        toast.error("An error occurred while resetting your password.");
+        toast.error("An error occurred while updating your password.");
       }
     } finally {
       setLoading(false);
     }
-  };  
-
+  };
+  
   return (
     <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-col items-center w-full gap-6 xl:flex-row">
           <div className="relative w-35 h-35 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800">
             <img
-              src={
-                profileImage ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  user?.firstName?.charAt(0) || "U"
-                )}&background=random&color=fff`
-              }
+              src={profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.firstName?.charAt(0) || "U")}&background=random&color=fff`}
               alt="User"
               onError={(e) => {
                 e.currentTarget.src = "/images/default-profile.png";
@@ -211,16 +210,6 @@ export default function UserMetaCard() {
             }}
           >
             <div className="grid grid-cols-1 gap-5">
-              {/* <div>
-                <Label>Old Password</Label>
-                <Input
-                  type="password"
-                  name="oldPassword"
-                  value={passwordFormData.oldPassword}
-                  onChange={handlePasswordChange}
-                />
-              </div> */}
-
               <div>
                 <Label>New Password</Label>
                 <Input
