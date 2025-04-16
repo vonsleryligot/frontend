@@ -39,16 +39,17 @@ export default function SignInForm() {
       const { jwtToken, ...user } = response;
   
       if (jwtToken) {
-        login(user, jwtToken);
- //  Use context function to update auth state
+        login(user, jwtToken); //  Use context function to update auth state
         navigate("/dashboard", { replace: true }); // Redirect after login
       } else {
         setError("Authentication failed, please try again.");
+        setLoading(false); // Make sure to reset loading here too
       }
     } catch (err: unknown) {
       const error = err as AxiosError<{ message: string }>;
       setError(error.response?.data?.message || "Invalid email or password.");
-    }    
+      setLoading(false); // Reset loading on error
+    }
   };
   
   return (
