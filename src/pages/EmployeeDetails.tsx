@@ -11,6 +11,11 @@ interface Account {
   role: string;
   country: string;
   city: string;
+  status: string;
+  rank: string;
+  rate: string;
+  bank: string;
+  position: string;
   department: string;
   employmentType: string;
   postalCode: string;
@@ -84,16 +89,16 @@ const EmployeeDetails = () => {
                     profileImage ||
                     `https://ui-avatars.com/api/?name=${encodeURIComponent(account?.firstName?.charAt(0) || "U")}&background=random&color=fff`
                   }
-                  alt="User"
+                  alt="N/A"
                   onError={(e) => { e.currentTarget.src = "/images/default-profile.png"; }}
                   className="object-cover w-full h-full"
                 />
               </div>
 
-              {/* User Details */}
+              {/* N/A Details */}
               <div className="order-3 xl:order-2">
                 <h4 className="mb-2 text-2xl font-semibold text-center text-gray-800 dark:text-white/90 xl:text-left">
-                  {account?.title || ""} {account?.firstName || "User"} {account?.lastName || ""}
+                  {account?.title || ""} {account?.firstName || "N/A"} {account?.lastName || ""}
                 </h4>
                 <div className="flex flex-col items-center gap-1 text-center xl:flex-row xl:gap-3 xl:text-left">
                   <p className="text-base text-gray-500 dark:text-gray-400">{account?.role || "N/A"}</p>
@@ -115,21 +120,21 @@ const EmployeeDetails = () => {
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">First Name</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.firstName || "User"}
+                    {account?.firstName || "N/A"}
                   </p>
                 </div>
-
+                  
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Last Name</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.lastName || "User"}
+                    {account?.lastName || "N/A"}
                   </p>
                 </div>
 
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Email address</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.email || "User"}
+                    {account?.email || "N/A"}
                   </p>
                 </div>
 
@@ -140,7 +145,7 @@ const EmployeeDetails = () => {
                   </p>
                 </div>
 
-                <div>
+                {/* <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Role</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                     {account?.role || "N/A"}
@@ -152,18 +157,18 @@ const EmployeeDetails = () => {
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
                     {account?.employmentType || "N/A"}
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
         </div>
 
-        {/* User Address */}
+        {/*User Address */}
         <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-7">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
-                User Address
+               User Address
               </h4>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
@@ -188,6 +193,86 @@ const EmployeeDetails = () => {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        {/* Employment Information */}
+        <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-7">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+                Employment Information
+              </h4>
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
+                <div>
+                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employee ID</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {account?.id
+                        ? `CBOPC-${String(account?.id).padStart(4, "0")}`
+                        : "N/A"}
+                    </p>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employment Status</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    { account?.status || "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Job Position</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {account?.position || "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Rank</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {account?.rank || "5 Star General"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Department</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {account?.department || "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employment Type</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                    {account?.employmentType || "N/A"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Compensation */}
+        <div className="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6 mt-7">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 dark:text-white/90 lg:mb-6">
+                Compensation
+              </h4>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-7 2xl:gap-x-32">
+                  <div>
+                    <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Daily Rate</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                      {account?.rate || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Back Account</p>
+                    <p className="text-sm font-medium text-gray-800 dark:text-white/90">
+                      {account?.bank || "N/A"}
+                    </p>
+                  </div>
+                </div>
             </div>
           </div>
         </div>
