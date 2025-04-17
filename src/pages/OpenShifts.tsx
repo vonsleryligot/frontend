@@ -190,10 +190,10 @@ export default function OpenShifts() {
     }
   };
 
-  const getUserFullName = (userId: number) => {
-    const user = users.find((user) => user.id === userId);
-    return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
-  };
+  // const getUserFullName = (userId: number) => {
+  //   const user = users.find((user) => user.id === userId);
+  //   return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
+  // };
 
   const getUserEmploymentType = (userId: number) => {
     const user = users.find((user) => user.id === userId);
@@ -222,7 +222,7 @@ export default function OpenShifts() {
           <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
             <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th>
+                {/* <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th> */}
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Date</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time In</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
@@ -243,7 +243,7 @@ export default function OpenShifts() {
 
                   return (
                     <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td>
+                      {/* <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td> */}
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
                         {shift.timeIn ? formatTime(shift.timeIn) : "-"}

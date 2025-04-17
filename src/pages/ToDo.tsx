@@ -9,7 +9,6 @@ const ToDo: React.FC = () => {
     <>
       <PageBreadcrumb pageTitle="Home / To Do" />
       <div className="text-gray-800 dark:text-white/90 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-6">
-        <h2 className="text-2xl font-bold">ToDo</h2>
 
         {/* Inline buttons with separate background and border */}
         <div className="mt-6 flex flex-wrap justify-start gap-4 mb-4">
