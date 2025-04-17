@@ -15,8 +15,8 @@ export default function SignUpForm() {
   const [title, setTitle] = useState("Mr.");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [department, setDepartment] = useState("");
-  const [employmentType, setemploymentType] = useState("");
+  // const [department, setDepartment] = useState("");
+  // const [employmentType, setemploymentType] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -102,7 +102,7 @@ export default function SignUpForm() {
     setError("");
 
     if (step === 1) {
-      if (!firstName || !lastName || !department || !employmentType || !email || !phone || !password || !confirmPassword) {
+      if (!firstName || !lastName  || !email || !phone || !password || !confirmPassword) {
         setError("All fields are required");
         return;
       }
@@ -132,8 +132,6 @@ export default function SignUpForm() {
         title,
         firstName,
         lastName,
-        department,
-        employmentType,
         email,
         phone,
         password,
@@ -191,7 +189,7 @@ export default function SignUpForm() {
                     <Label>Last Name<span className="text-error-500">*</span></Label>
                     <Input type="text" placeholder="Enter your last name" value={lastName} onChange={(e) => setLastName(capitalizeFirstLetter(e.target.value))} />
                   </div>
-                  <div>
+                  {/* <div>
                     <Label>Department<span className="text-error-500">*</span></Label>
                     <select
                       value={department}
@@ -204,8 +202,8 @@ export default function SignUpForm() {
                       <option value="Associate">Associate</option>
                       <option value="Operation">Operation</option>
                     </select>
-                  </div>
-                  <div>
+                  </div> */}
+                  {/* <div>
                     <Label>Employment Type<span className="text-error-500">*</span></Label>
                     <select
                       value={employmentType}
@@ -218,7 +216,7 @@ export default function SignUpForm() {
                       <option value="Apprenticeship">Apprenticeship</option>
                       <option value="Open-Shifts">Open Shifts</option>
                     </select>
-                  </div>
+                  </div> */}
                   <div>
                     <Label>Email<span className="text-error-500">*</span></Label>
                     <Input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} />
