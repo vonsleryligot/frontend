@@ -14,30 +14,28 @@ export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifying, setNotifying] = useState(true);
   const [events, setEvents] = useState<Event[]>([]);
-
+  
   // Fetch events with authorization header (if required)
   const fetchEvents = async () => {
     try {
-      const token = localStorage.getItem('authToken'); // Assuming token is stored in localStorage
+      const token = localStorage.getItem("authToken");
       const res = await axios.get("http://localhost:4000/calendars", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const today = new Date().toISOString().split("T")[0];
-      const upcoming = res.data.filter((event: Event) => event.startDate >= today);
-
-      // Sort events by startDate in descending order (latest first)
-      const sortedEvents = upcoming.sort((a: Event, b: Event) => {
-        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
-      });
-
-      setEvents(sortedEvents);
-      if (sortedEvents.length > 0) setNotifying(true);
+  
+      const allEvents = res.data;
+  
+      // Save all events
+      setEvents(allEvents);
+      
+      // Trigger notification if naa’y events
+      if (allEvents.length > 0) setNotifying(true);
     } catch (error) {
       console.error("Failed to fetch events", error);
     }
-  };
+  };  
 
   useEffect(() => {
     fetchEvents();
@@ -113,21 +111,27 @@ export default function NotificationDropdown() {
           {events.length === 0 ? (
             <p className="text-center text-gray-500 dark:text-gray-400">No Notification</p>
           ) : (
-            events.map((event) => (
-              <li key={event.id}>
-                <DropdownItem
-                  onItemClick={closeDropdown}
-                  className="flex flex-col items-start gap-1 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-                >
-                  <span className="font-medium text-gray-800 dark:text-white/90">
-                    {event.title}
-                  </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    Event was added: "{event.title}"
-                  </span>
-                </DropdownItem>
-              </li>
-            ))
+            [...events].reverse().map((event, index) => {
+              const isLatest = index === 0;         
+              return (
+                <li key={event.id}>
+                  <DropdownItem
+                    onItemClick={closeDropdown}
+                    className={`flex flex-col items-start gap-1 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
+                      isLatest ? "bg-orange-50 dark:bg-orange-900/20" : ""
+                    }`}
+                  >
+                    <span className="font-medium text-gray-800 dark:text-white/90">
+                      {event.title}
+                    </span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      Event was added: "{event.title}"
+                      {isLatest && <span className="ml-1 text-xs text-orange-500 font-semibold"></span>}
+                    </span>
+                  </DropdownItem>
+                </li>
+              );
+            })
           )}
         </ul>
       </Dropdown>

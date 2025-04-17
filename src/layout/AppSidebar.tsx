@@ -14,6 +14,8 @@ import {
   FileIcon,
   TableIcon,
   PaperPlaneIcon,
+  Cardicon,
+  Deductionicon,
 } from "../icons";
 
 type SubNavItem = {
@@ -99,7 +101,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    icon: <DollarLineIcon />,
+    icon: <Cardicon />,
     name: "Pay Check",
     path: "/paycheck",
     roles: ["Manager", "Admin", "User"],
@@ -107,6 +109,58 @@ const navItems: NavItem[] = [
       {
         name: "Pay Slip",
         path: "/paycheck/payslip",
+      },
+    ],
+  },
+  {
+    icon: <DollarLineIcon />,
+    name: "Earnigs",
+    path: "/paycheck",
+    roles: ["Manager", "Admin", "User"],
+    subItems: [
+      {
+        name: "Allowances",
+        path: "/paycheck/allowance",
+      },
+      {
+        name: "Deminimis",
+        path: "/paycheck/deminimis",
+      },
+      {
+        name: "Earnigs",
+        path: "/paycheck/earnigs",
+      },
+      {
+        name: "History",
+        path: "/paycheck/History",
+      },
+    ],
+  },
+  {
+    icon: <Deductionicon />,
+    name: "Deductions",
+    path: "/paycheck",
+    roles: ["Manager", "Admin", "User"],
+    subItems: [
+      {
+        name: "Contribution",
+        path: "/paycheck/Contribution",
+      },
+      {
+        name: "Witholding Tax",
+        path: "/paycheck/Witholding Tax",
+      },
+      {
+        name: "Governtment Loans",
+        path: "/paycheck/Governtment Loans",
+      },
+      {
+        name: "Third Party Deductions",
+        path: "/paycheck/Third Party Deductions",
+      },
+      {
+        name: "Other Deductions",
+        path: "/paycheck/Other Deductions",
       },
     ],
   },
