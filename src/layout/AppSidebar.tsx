@@ -93,10 +93,7 @@ const navItems: NavItem[] = [
       },
       {
         name: "Absent",
-        subItems: [
-          { name: "Overview", path: "/hours/absent/overview" },
-          { name: "Detailed View", path: "/hours/absent/detail" },
-        ],
+        path: "/hours/absent",
       },
     ],
   },
