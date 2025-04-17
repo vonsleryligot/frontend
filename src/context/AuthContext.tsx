@@ -7,7 +7,12 @@ interface User {
   lastName: string;
   department: string;
   employmentType: string; 
+  status: string;
   email: string;
+  position: string;
+  rank: string;
+  bank: string;
+  rate: string;
   role: string;
   phone: number;
   country: string;
