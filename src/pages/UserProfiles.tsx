@@ -2,6 +2,8 @@ import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import UserMetaCard from "../components/UserProfile/UserMetaCard";
 import UserInfoCard from "../components/UserProfile/UserInfoCard";
 import UserAddressCard from "../components/UserProfile/UserAddressCard";
+import UserEmploymentCard from "../components/UserProfile/UserEmploymentCard";
+import UserCompensationCard from "../components/UserProfile/UserCompensationCard";
 
 export default function UserProfiles() {
   return (
@@ -12,6 +14,8 @@ export default function UserProfiles() {
           <UserMetaCard />
           <UserInfoCard />
           <UserAddressCard />
+          <UserEmploymentCard />
+          <UserCompensationCard />
         </div>
       </div>
     </>
