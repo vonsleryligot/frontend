@@ -52,8 +52,6 @@ export const signUp = async (data: {
   title: string;
   firstName: string;
   lastName: string;
-  department: string;
-  employmentType: string;
   email: string;
   phone: string;
   password: string;
