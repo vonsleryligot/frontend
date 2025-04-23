@@ -33,9 +33,6 @@ import ApprenticeshipShifts from "./pages/Apprenticeship";
 import Absent from "./pages/Absent";
 import Archive from "./pages/Archives";
 
-// import Hours from "./pages/Hours";
-
-<ToastContainer /> 
 
 export default function App() {
   return (
@@ -43,6 +40,19 @@ export default function App() {
       <ShiftProvider>
         <Router>
           <ScrollToTop />
+          <ToastContainer 
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            className="mt-30"
+          />
           <Routes>
             {/* Redirect to Sign In if no authentication */}
             <Route path="/" element={<Navigate to="/signin" replace />} />

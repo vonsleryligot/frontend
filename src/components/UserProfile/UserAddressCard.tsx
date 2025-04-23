@@ -121,7 +121,7 @@ export default function UserInfoCard() {
       setFormData(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      toast.success("Profile updated successfully!");
+      toast.success("Address updated successfully!");
       closeModal();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
