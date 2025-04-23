@@ -54,8 +54,16 @@ import { ReactComponent as AlertHexaIcon } from "./alert-hexa.svg?react";
 import { ReactComponent as ErrorHexaIcon } from "./info-hexa.svg?react";
 import { ReactComponent as Cardicon } from "./credit-card.svg?react";
 import { ReactComponent as Deductionicon } from "./hand-coins.svg?react";
+import { ReactComponent as ArchiveIcon } from "./archive-x.svg?react";
+import { ReactComponent as PlaneIcon } from "./plane-takeoff.svg?react";
+import { ReactComponent as AddIcon } from "./user-plus.svg?react";
+import { ReactComponent as ArchiveListIcon } from "./archive.svg?react";
 
 export {
+  ArchiveListIcon,
+  AddIcon,
+  PlaneIcon,
+  ArchiveIcon,
   Deductionicon,
   Cardicon,
   ErrorHexaIcon,

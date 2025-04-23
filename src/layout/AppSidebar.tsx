@@ -13,7 +13,7 @@ import {
   PencilIcon,
   FileIcon,
   TableIcon,
-  PaperPlaneIcon,
+  PlaneIcon,
   Cardicon,
   Deductionicon,
 } from "../icons";
@@ -56,7 +56,7 @@ const navItems: NavItem[] = [
     roles: ["Manager", "Admin"],
   },
   {
-    icon: <PaperPlaneIcon />,
+    icon: <PlaneIcon />,
     name: "Leaves",
     path: "/leaves",
     roles: ["Manager", "Admin", "User"],

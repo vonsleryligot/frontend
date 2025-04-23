@@ -31,6 +31,7 @@ import PartTimeShifts from "./pages/PartTimeShifts";
 import TodoApprenticeshipShifts from "./pages/TodoApprenticeshipShifts"
 import ApprenticeshipShifts from "./pages/Apprenticeship";
 import Absent from "./pages/Absent";
+import Archive from "./pages/Archives";
 
 // import Hours from "./pages/Hours";
 
@@ -72,6 +73,7 @@ export default function App() {
                 <Route path="/todo-apprenticeship-shifts" element={<TodoApprenticeshipShifts/>} />
                 <Route path="/hours/absent" element={<Absent/>} />
                 <Route path="/add-account" element={<AddAccount />} />
+                <Route path="/archive-list" element={<Archive />} />
               </Route>
             </Route>
 

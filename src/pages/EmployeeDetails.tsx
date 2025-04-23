@@ -11,22 +11,27 @@ interface Account {
   role: string;
   country: string;
   city: string;
-  status: string;
-  rank: string;
-  rate: string;
-  bank: string;
-  position: string;
-  department: string;
-  employmentType: string;
   postalCode: string;
   email: string;
   phone: string;
   profile_image?: string | null;
 }
 
+interface EmploymentDetails {
+  accountId: number;
+  status: string;
+  position: string;
+  rank: string;
+  department: string;
+  employmentType: string;
+  rate: string;
+  bank: string;
+}
+
 const EmployeeDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [account, setAccount] = useState<Account | null>(null);
+  const [employmentDetails, setEmploymentDetails] = useState<EmploymentDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -53,6 +58,41 @@ const EmployeeDetails = () => {
       }
     };
 
+    const fetchEmploymentDetails = async () => {
+      try {
+        const token = localStorage.getItem("token") || ""; // Fallback to an empty string
+    
+        if (!token) {
+          setError("No token found. Please log in.");
+          return;
+        }
+    
+        const response = await fetch(`http://localhost:4000/employments`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+    
+        if (!response.ok) throw new Error("Failed to fetch employment details");
+    
+        const data = await response.json();
+        const employment = data.find((emp: EmploymentDetails) => emp.accountId === parseInt(id ?? "")); // Fallback to empty string if id is undefined
+    
+        if (employment) {
+          setEmploymentDetails(employment);
+        } 
+        // else {
+        //   setEmploymentDetails(null);
+        //   setError("No employment details found.");
+        // }
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        }
+      }
+    };
+    
     const fetchProfileImage = async () => {
       try {
         const response = await fetch(`http://localhost:4000/profile-uploads/${id}`);
@@ -68,6 +108,7 @@ const EmployeeDetails = () => {
 
     if (id) {
       fetchAccountDetails();
+      fetchEmploymentDetails();
       fetchProfileImage();
     }
   }, [id]);
@@ -123,7 +164,7 @@ const EmployeeDetails = () => {
                     {account?.firstName || "N/A"}
                   </p>
                 </div>
-                  
+
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Last Name</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
@@ -144,20 +185,6 @@ const EmployeeDetails = () => {
                     {account?.phone || "N/A"}
                   </p>
                 </div>
-
-                {/* <div>
-                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Role</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.role || "N/A"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employment Type</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.employmentType || "N/A"}
-                  </p>
-                </div> */}
               </div>
             </div>
           </div>
@@ -217,35 +244,35 @@ const EmployeeDetails = () => {
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employment Status</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    { account?.status || "N/A"}
+                    {employmentDetails?.status || "N/A"}
                   </p>
                 </div>
 
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Job Position</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.position || "N/A"}
+                    {employmentDetails?.position || "N/A"}
                   </p>
                 </div>
 
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Rank</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.rank || "5 Star General"}
+                    {employmentDetails?.rank || "N/A"}
                   </p>
                 </div>
 
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Department</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.department || "N/A"}
+                    {employmentDetails?.department || "N/A"}
                   </p>
                 </div>
 
                 <div>
                   <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Employment Type</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                    {account?.employmentType || "N/A"}
+                    {employmentDetails?.employmentType || "N/A"}
                   </p>
                 </div>
               </div>
@@ -263,13 +290,13 @@ const EmployeeDetails = () => {
                   <div>
                     <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Daily Rate</p>
                     <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                      {account?.rate || "N/A"}
+                      {employmentDetails?.rate || "N/A"}
                     </p>
                   </div>
                   <div>
                     <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Back Account</p>
                     <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                      {account?.bank || "N/A"}
+                      {employmentDetails?.bank || "N/A"}
                     </p>
                   </div>
                 </div>

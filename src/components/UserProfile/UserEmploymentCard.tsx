@@ -7,7 +7,7 @@ import Label from "../form/Label";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 
-export default function UserInfoCard() {
+export default function UserEmploymentCard() {
   const { isOpen, openModal, closeModal } = useModal();
   const { user, setUser } = useAuth();
   const [role, setRole] = useState<string | null>(null);
@@ -28,18 +28,14 @@ export default function UserInfoCard() {
       setFormData((prev) => ({
         ...prev,
         id: user.id || "",
-        status: user.status || "",
-        position: user.position || "",
-        rank: user.rank || "",
-        department: user.department || "",
-        employmentType: user.employmentType || "",
       }));
   
+      const token = localStorage.getItem("token");
+      if (!token) return;
+  
+      // Fetch user role
       const fetchUserRole = async () => {
         try {
-          const token = localStorage.getItem("token");
-          if (!token) return;
-  
           const res = await fetch(`http://localhost:4000/accounts/${user.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -51,11 +47,34 @@ export default function UserInfoCard() {
         }
       };
   
+      // Fetch employment details
+      const fetchEmployment = async () => {
+        try {
+          const res = await fetch(`http://localhost:4000/employments/account/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+      
+          if (!res.ok) throw new Error("Failed to fetch employment data");
+          const data = await res.json();
+      
+          setFormData((prev) => ({
+            ...prev,
+            status: data.status || "",
+            position: data.position || "",
+            rank: data.rank || "",
+            department: data.department || "",
+            employmentType: data.employmentType || "",
+          }));
+        } catch (error) {
+          console.error("Failed to fetch employment data:", error);
+        }
+      };      
+  
       fetchUserRole();
+      fetchEmployment();
     }
   }, [user]);
   
-
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -199,20 +218,17 @@ const handleSave = async () => {
           <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
             Employment Information
           </h4>
-          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
-            Update your details to keep your profile up-to-date.
-          </p>
-
           <form className="flex flex-col">
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               <div>
                 <Label htmlFor="id">Employee ID</Label>
-                <Input id="id" type="text" name="id" value={formData.id} onChange={handleChange} />
+                <Input id="id" type="text" name="id" value={formData.id  ? `CBOPC-${String(formData.id).padStart(4, "0")}`
+                    : "N/A"} onChange={handleChange} disabled/>
               </div>
 
               <div>
                 <Label htmlFor="status">Employment Status</Label>
-                <Input id="status" type="text" name="status" value={formData.status} onChange={handleChange} />
+                <Input id="status" type="text" name="status" value={formData.status} onChange={handleChange} disabled/>
               </div>
 
               <div>
