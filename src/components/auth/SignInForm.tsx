@@ -9,9 +9,8 @@ import { signIn } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { AxiosError } from "axios";
 
-
 export default function SignInForm() {
-  const { login } = useAuth(); //  Get login function from context
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -19,39 +18,37 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-    setLoading(true); // Set loading to true when submitting
-  
+    setLoading(true);
+
     if (!email || !password) {
       setError("All fields are required");
-      setLoading(false); // Reset loading state
+      setLoading(false);
       return;
     }
-  
+
     try {
       const response = await signIn(email, password);
       console.log("Login successful:", response);
-  
-      const { jwtToken, ...user } = response;
-  
-      if (jwtToken) {
-        login(user, jwtToken); //  Use context function to update auth state
-        navigate("/dashboard", { replace: true }); // Redirect after login
+
+      if (response && response.id) {
+        await login(response, "default-token");
+        navigate("/dashboard", { replace: true });
       } else {
-        setError("Authentication failed, please try again.");
-        setLoading(false); // Make sure to reset loading here too
+        setError("Authentication failed: Invalid response format");
+        setLoading(false);
       }
     } catch (err: unknown) {
       const error = err as AxiosError<{ message: string }>;
       setError(error.response?.data?.message || "Invalid email or password.");
-      setLoading(false); // Reset loading on error
+      setLoading(false);
     }
   };
-  
+
   return (
     <div className="flex flex-col flex-1">
       <div className="w-full max-w-md pt-10 mx-auto"></div>

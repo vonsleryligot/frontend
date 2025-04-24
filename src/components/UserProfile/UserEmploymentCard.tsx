@@ -90,9 +90,6 @@ export default function UserEmploymentCard() {
     setLoading(true);
   
     try {
-      console.log("Sending to API:", JSON.stringify(formData)); // Log request
-  
-      // Use accountId for updating employment
       const response = await fetch(`http://localhost:4000/employments/account/${user.id}`, {
         method: "PUT",
         headers: {
@@ -102,25 +99,9 @@ export default function UserEmploymentCard() {
         body: JSON.stringify(formData),
       });
   
-      const responseData = await response.json();
-      console.log("API Response:", responseData); // Log API response
-  
       if (!response.ok) {
-        throw new Error(responseData.message || "Failed to update employment info");
+        throw new Error("Failed to update employment info");
       }
-  
-      // Fetch updated data
-      const refreshedUser = await fetch(`http://localhost:4000/accounts/${user.id}?_=${Date.now()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
-      const updatedUser = await refreshedUser.json();
-      console.log("Updated User:", updatedUser); // Log fetched user data
-  
-      // Update both user and formData states
-      setUser(updatedUser);
-      setFormData(updatedUser); // Ensure formData is set with the updated user info
-      localStorage.setItem("user", JSON.stringify(updatedUser));
   
       toast.success("Employment updated successfully!");
       closeModal();

@@ -58,7 +58,7 @@ const Timesheet: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);  // current page number
   const [totalPages, setTotalPages] = useState(1);    // total number of pages
-  const itemsPerPage = 4;  // number of items per page
+  const itemsPerPage = 5;  // number of items per page
 
   const fetchTimesheet = async () => {
     try {

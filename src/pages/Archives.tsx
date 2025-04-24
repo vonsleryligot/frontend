@@ -1,53 +1,133 @@
 import { useState, useEffect } from 'react';
 import { FaArchive, FaUndo, FaEye } from 'react-icons/fa'; // Icons for Archive, Unarchive, and View
 import axios from 'axios'; // For API requests
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import { toast } from "react-toastify";
 
-interface Item {
-  id: string;
-  name: string;
+interface Account {
+  id: number;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   email: string;
   role: string;
   department: string;
   employmentType: string;
   phone: string;
-  profile_image: string;
-  isArchived: boolean;
+  profile_image?: string | null;
+  archived: boolean;
+  status: string;
 }
 
 const Archive = () => {
-  const [items, setItems] = useState<Item[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const [error, setError] = useState<string | null>(null);
+  const [unarchivingId, setUnarchivingId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
-  // Fetch items from the backend API
-  const fetchItems = async () => {
+  // Fetch archived accounts from the backend API
+  const fetchArchivedAccounts = async () => {
     try {
-      const response = await axios.get(`/api/items?page=${currentPage}&search=${search}`); // Adjust API endpoint as needed
-      setItems(response.data.items);
-      setTotalPages(response.data.totalPages);
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
+      // Fetch all accounts
+      const response = await axios.get('http://localhost:4000/accounts', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('All accounts:', response.data);
+      
+      // Log detailed information about each account
+      response.data.forEach((account: Account, index: number) => {
+        console.log(`Account ${index + 1}:`, account);
+        console.log(`Account ${index + 1} archived status:`, account.archived);
+        console.log(`Account ${index + 1} status:`, account.status);
+      });
+
+      // Filter for archived accounts - check both archived flag and status
+      const archivedAccounts = response.data.filter((account: Account) => 
+        account.archived === true || account.status === 'Inactive'
+      );
+      
+      console.log('Archived accounts:', archivedAccounts);
+      
+      // Try to fetch employment details for each account
+      let employments: any[] = [];
+      try {
+        const employmentResponse = await axios.get('http://localhost:4000/employments', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (employmentResponse.status === 200) {
+          employments = employmentResponse.data;
+        } else {
+          console.warn("Failed to fetch employments, using default values");
+        }
+      } catch (employmentError) {
+        console.warn("Error fetching employments:", employmentError);
+      }
+
+      // Combine accounts with their corresponding employment details
+      const accountsWithEmployment = archivedAccounts.map((account: Account) => {
+        const employment = employments.find(
+          (employment: any) => employment.accountId === account.id
+        );
+        return {
+          ...account,
+          department: employment ? employment.department : "Unknown",
+          employmentType: employment ? employment.employmentType : "Unknown",
+        };
+      });
+      
+      setAccounts(accountsWithEmployment);
+      setTotalPages(Math.ceil(accountsWithEmployment.length / 5)); // Assuming 5 items per page
     } catch (error) {
-      console.error('Error fetching items:', error);
+      console.error('Error fetching archived accounts:', error);
+      setError('Failed to load archived accounts');
     } finally {
       setLoading(false);
     }
   };
 
-  // Archive/unarchive an item
-  const toggleArchive = async (id: string, currentStatus: boolean) => {
+  // Unarchive an account
+  const handleUnarchive = async (id: number) => {
     try {
-      const newStatus = !currentStatus;
-      await axios.put(`/api/items/${id}`, { isArchived: newStatus }); // Replace with your API endpoint
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === id ? { ...item, isArchived: newStatus } : item
-        )
-      );
+      setUnarchivingId(id);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast.error('Authentication required');
+        return;
+      }
+
+      const response = await axios.put(`http://localhost:4000/accounts/${id}/unarchive`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 200) {
+        toast.success('Account unarchived successfully');
+        // Remove the unarchived account from the list
+        setAccounts(accounts.filter(account => account.id !== id));
+      }
     } catch (error) {
-      console.error('Error updating item:', error);
+      console.error('Error unarchiving account:', error);
+      toast.error('Failed to unarchive account');
+    } finally {
+      setUnarchivingId(null);
     }
   };
 
@@ -56,9 +136,21 @@ const Archive = () => {
     setCurrentPage(newPage);
   };
 
+  // Filter accounts based on search
+  const filteredAccounts = accounts.filter(account => 
+    `${account.firstName} ${account.lastName} ${account.email} ${account.phone} ${account.department}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  // Pagination logic
+  const indexOfLastAccount = currentPage * 5; // 5 items per page
+  const indexOfFirstAccount = indexOfLastAccount - 5;
+  const currentAccounts = filteredAccounts.slice(indexOfFirstAccount, indexOfLastAccount);
+
   useEffect(() => {
-    fetchItems();
-  }, [currentPage, search]);
+    fetchArchivedAccounts();
+  }, []);
 
   return (
     <>
@@ -78,8 +170,12 @@ const Archive = () => {
             </div>
           </div>
 
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          
           {loading ? (
-            <p>Loading accounts...</p>
+            <p>Loading archived accounts...</p>
+          ) : accounts.length === 0 ? (
+            <p className="text-center text-gray-500">No archived accounts found</p>
           ) : (
             <div className="overflow-auto">
               <table className="min-w-[640px] w-full border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm text-left">
@@ -97,36 +193,39 @@ const Archive = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700 text-gray-700 dark:text-gray-200">
-                  {items.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                  {currentAccounts.map((account) => (
+                    <tr key={account.id} className="hover:bg-gray-100 dark:hover:bg-gray-800">
                       <td className="p-3 text-xs">
                         <img
-                          src={item.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}`}
+                          src={account.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(account.firstName + " " + account.lastName)}`}
                           alt="Profile"
                           className="w-10 h-10 rounded-full object-cover border"
                         />
                       </td>
-                      <td className="p-3 text-xs">{item.name}</td>
-                      <td className="p-3 text-xs">{item.email}</td>
-                      <td className="p-3 text-xs">{item.role}</td>
-                      <td className="p-3 text-xs">{item.department}</td>
-                      <td className="p-3 text-xs">{item.employmentType}</td>
-                      <td className="p-3 text-xs">{item.phone}</td>
+                      <td className="p-3 text-xs">{account.firstName} {account.middleName} {account.lastName}</td>
+                      <td className="p-3 text-xs">{account.email}</td>
+                      <td className="p-3 text-xs">{account.role}</td>
+                      <td className="p-3 text-xs">{account.department}</td>
+                      <td className="p-3 text-xs">{account.employmentType}</td>
+                      <td className="p-3 text-xs">{account.phone}</td>
                       <td className="p-3 text-xs text-center">
-                        <Link to={`/employee-details/${item.id}`} className="text-blue-600 hover:text-blue-800">
+                        <Link to={`/employee-details/${account.id}`} className="text-blue-600 hover:text-blue-800">
                           <FaEye className="w-5 h-5" />
                         </Link>
                       </td>
                       <td className="p-3 text-xs">
                         <button
-                          onClick={() => toggleArchive(item.id, item.isArchived)}
-                          className="text-red-600 hover:text-red-800"
-                          title={item.isArchived ? "Unarchive" : "Archive"}
+                          onClick={() => handleUnarchive(account.id)}
+                          className={`text-green-600 hover:text-green-800 ${unarchivingId === account.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title="Unarchive"
+                          disabled={unarchivingId === account.id}
                         >
-                          {item.isArchived ? (
-                            <FaUndo className="w-5 h-5" />
+                          {unarchivingId === account.id ? (
+                            <div className="flex items-center justify-center">
+                              <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
                           ) : (
-                            <FaArchive className="w-5 h-5" />
+                            <FaUndo className="w-5 h-5" />
                           )}
                         </button>
                       </td>
@@ -138,25 +237,27 @@ const Archive = () => {
           )}
 
           {/* Pagination Controls */}
-          <div className="flex justify-between items-center mt-4">
-            <button
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-              disabled={currentPage === 1}
-              onClick={() => handlePageChange(currentPage - 1)}
-            >
-              Previous
-            </button>
-            <div className="text-xs">
-              Page {currentPage} of {totalPages}
+          {!loading && accounts.length > 0 && (
+            <div className="flex justify-between items-center mt-4">
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                Previous
+              </button>
+              <div className="text-xs">
+                Page {currentPage} of {totalPages}
+              </div>
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                Next
+              </button>
             </div>
-            <button
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-              disabled={currentPage === totalPages}
-              onClick={() => handlePageChange(currentPage + 1)}
-            >
-              Next
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </>

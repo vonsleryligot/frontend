@@ -44,7 +44,7 @@ export default function OpenShifts() {
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [isOpenEmployee, setIsOpenEmployee] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(5);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
 
   useEffect(() => {

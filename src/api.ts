@@ -11,7 +11,7 @@ const api = axios.create({
 // Automatically attach token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,7 +27,7 @@ export const signIn = async (email: string, password: string) => {
     console.log("Login Response:", response.data);
 
     if (response.data?.jwtToken) {
-      localStorage.setItem("token", response.data.jwtToken);
+      localStorage.setItem("authToken", response.data.jwtToken);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       // Ensure the auth state updates immediately

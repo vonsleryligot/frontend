@@ -44,7 +44,7 @@ export default function PartTimeShifts() {
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [isPartTimeEmployee, setIsPartTimeEmployee] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(5);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
 
   const getActionLogStatus = (shiftId: number, originalStatus: string) => {
@@ -270,7 +270,6 @@ export default function PartTimeShifts() {
   const indexOfLastShift = currentPage * itemsPerPage;
   const indexOfFirstShift = indexOfLastShift - itemsPerPage;
   const currentShifts = shifts.slice(indexOfFirstShift, indexOfLastShift);
-
   const totalPages = Math.ceil(shifts.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
 import { EyeIcon } from "lucide-react";
 import { ArchiveIcon, AddIcon, ArchiveListIcon } from "../icons";
+import { toast } from "react-toastify";
 
 interface Account {
   id: number;
@@ -19,6 +20,7 @@ interface Account {
   phone: string;
   profile_image?: string | null;
   archived: boolean;
+  status: string;
 }
 
 interface Employment {
@@ -33,6 +35,8 @@ const WorkForce = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>("");
+  const [archivingId, setArchivingId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,13 +63,37 @@ const WorkForce = () => {
       if (!response.ok) throw new Error(`Failed to fetch accounts`);
       const data: Account[] = await response.json();
 
-      // Fetch employment details for each account
-      const employmentResponse = await fetch(`http://localhost:4000/employments`);
-      if (!employmentResponse.ok) throw new Error("Failed to fetch employments");
-      const employments: Employment[] = await employmentResponse.json();
+      console.log('All accounts from API:', data);
+      
+      // Log detailed information about each account
+      data.forEach((account: Account, index: number) => {
+        console.log(`Account ${index + 1}:`, account);
+        console.log(`Account ${index + 1} archived status:`, account.archived);
+        console.log(`Account ${index + 1} status:`, account.status);
+      });
+
+      // Filter out archived accounts - check both archived flag and status
+      const activeAccounts = data.filter(account => 
+        account.archived !== true && account.status !== 'Inactive'
+      );
+
+      console.log('Active accounts after filtering:', activeAccounts);
+
+      // Try to fetch employment details for each account
+      let employments: Employment[] = [];
+      try {
+        const employmentResponse = await fetch(`http://localhost:4000/employments`);
+        if (employmentResponse.ok) {
+          employments = await employmentResponse.json();
+        } else {
+          console.warn("Failed to fetch employments, using default values");
+        }
+      } catch (employmentError) {
+        console.warn("Error fetching employments:", employmentError);
+      }
 
       // Combine accounts with their corresponding employment details
-      const accountsWithEmployment = data.map((account) => {
+      const accountsWithEmployment = activeAccounts.map((account) => {
         const employment = employments.find(
           (employment: Employment) => employment.accountId === account.id
         );
@@ -116,26 +144,40 @@ const WorkForce = () => {
 
   const handleArchive = async (accountId: number) => {
     try {
-      const token = localStorage.getItem('token'); // Get the token from localStorage
+      setArchivingId(accountId);
+      const token = localStorage.getItem('token');
       if (!token) {
-        console.error('No token found');
+        toast.error('Authentication required. Please log in again.');
         return;
       }
 
       const response = await fetch(`http://localhost:4000/accounts/${accountId}/archive`, {
-        method: 'PATCH', // PATCH para update lang, dili POST
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Add token in Authorization header
-        },
-        body: JSON.stringify({ archived: true }), // archived set to true
+          'Authorization': `Bearer ${token}`,
+        }
       });
 
-      if (!response.ok) throw new Error("Failed to archive account");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to archive account");
+      }
 
-      fetchAccounts(); // Reload list after archive
+      // Log the response data
+      const responseData = await response.json();
+      console.log('Archive response:', responseData);
+
+      // Update local state to remove the archived account
+      setAccounts(accounts.filter(account => account.id !== accountId));
+      setFilteredAccounts(filteredAccounts.filter(account => account.id !== accountId));
+      
+      toast.success('Account archived successfully');
     } catch (err) {
       console.error("Archive failed", err);
+      toast.error(err instanceof Error ? err.message : 'Failed to archive account');
+    } finally {
+      setArchivingId(null);
     }
   };
 
@@ -215,10 +257,17 @@ const WorkForce = () => {
                       <td className="p-3 text-xs">
                         <button
                           onClick={() => handleArchive(account.id)}
-                          className="text-red-600 hover:text-red-800"
+                          className={`text-red-600 hover:text-red-800 ${archivingId === account.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title="Archive"
+                          disabled={archivingId === account.id}
                         >
-                          <ArchiveIcon className="w-5 h-5" />
+                          {archivingId === account.id ? (
+                            <div className="flex items-center justify-center">
+                              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          ) : (
+                            <ArchiveIcon className="w-5 h-5" />
+                          )}
                         </button>
                       </td>
                       <td className="p-3 text-xs">

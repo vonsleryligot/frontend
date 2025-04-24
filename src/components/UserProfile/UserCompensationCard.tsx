@@ -89,14 +89,9 @@ export default function UserCompensationCard() {
         body: JSON.stringify(formData),
       });
   
-      const responseData = await response.json();
-  
       if (!response.ok) {
-        throw new Error(responseData.message || "Failed to update compensation info");
+        throw new Error("Failed to update compensation info");
       }
-  
-      // Refetch updated data instead of relying on responseData
-      // await fetchEmployment(); // Add this
   
       toast.success("Compensation updated successfully!");
       closeModal();

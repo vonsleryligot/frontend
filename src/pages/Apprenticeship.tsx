@@ -48,7 +48,7 @@ export default function ApprenticeshipShifts() {
   const [isApprenticeshipEmployee, setIsApprenticeshipEmployee] = useState<boolean>(false);
   const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -250,7 +250,6 @@ export default function ApprenticeshipShifts() {
   const indexOfLastShift = currentPage * itemsPerPage;
   const indexOfFirstShift = indexOfLastShift - itemsPerPage;
   const currentShifts = shifts.slice(indexOfFirstShift, indexOfLastShift);
-
   const totalPages = Math.ceil(shifts.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {

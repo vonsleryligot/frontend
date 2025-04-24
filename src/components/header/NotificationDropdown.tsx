@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { toast } from "react-toastify";
 
 interface Event {
   id: number;
@@ -14,11 +15,24 @@ export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifying, setNotifying] = useState(true);
   const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(false);
   
   // Fetch events with authorization header (if required)
   const fetchEvents = async () => {
+    setLoading(true);
     try {
-      const token = localStorage.getItem("authToken");
+      // Get the token from localStorage - make sure to use the correct key
+      const token = localStorage.getItem("token");
+      
+      // Check if token exists
+      if (!token) {
+        console.warn("No authentication token found");
+        toast.error("Please log in to view notifications");
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
+      
       const res = await axios.get("http://localhost:4000/calendars", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -30,10 +44,30 @@ export default function NotificationDropdown() {
       // Save all events
       setEvents(allEvents);
       
-      // Trigger notification if naa’y events
+      // Trigger notification if there are events
       if (allEvents.length > 0) setNotifying(true);
     } catch (error) {
       console.error("Failed to fetch events", error);
+      
+      // Handle specific error cases
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          toast.error("Authentication error. Please log in again.");
+        } else if (error.response?.status === 500) {
+          toast.error("Server error. Please try again later.");
+        } else if (error.response?.data?.message === "No token provided") {
+          toast.error("Authentication error. Please log in again.");
+        } else {
+          toast.error(`Error fetching events: ${error.message}`);
+        }
+      } else {
+        toast.error("An unexpected error occurred");
+      }
+      
+      // Set empty events array on error
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
   };  
 
@@ -86,52 +120,69 @@ export default function NotificationDropdown() {
           <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
             Notifications
           </h5>
-          <button
-            onClick={toggleDropdown}
-            className="text-gray-500 transition dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          >
-            <svg
-              className="fill-current"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="flex items-center">
+            <button
+              onClick={() => fetchEvents()}
+              disabled={loading}
+              className="mr-2 text-gray-500 transition dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
+              title="Refresh notifications"
             >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
+              <svg
+                className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={toggleDropdown}
+              className="text-gray-500 transition dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            >
+              <svg
+                className="fill-current"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M6.21967 7.28131C5.92678 6.98841 5.92678 6.51354 6.21967 6.22065C6.51256 5.92775 6.98744 5.92775 7.28033 6.22065L11.999 10.9393L16.7176 6.22078C17.0105 5.92789 17.4854 5.92788 17.7782 6.22078C18.0711 6.51367 18.0711 6.98855 17.7782 7.28144L13.0597 12L17.7782 16.7186C18.0711 17.0115 18.0711 17.4863 17.7782 17.7792C17.4854 18.0721 17.0105 18.0721 16.7176 17.7792L11.999 13.0607L7.28033 17.7794C6.98744 18.0722 6.51256 18.0722 6.21967 17.7794C5.92678 17.4865 5.92678 17.0116 6.21967 16.7187L10.9384 12L6.21967 7.28131Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-          {events.length === 0 ? (
-            <p className="text-center text-gray-500 dark:text-gray-400">No Notification</p>
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="w-8 h-8 border-4 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+              <span className="ml-2 text-gray-500 dark:text-gray-400">Loading...</span>
+            </div>
+          ) : events.length === 0 ? (
+            <p className="text-center text-gray-500 dark:text-gray-400">No notifications</p>
           ) : (
-            [...events].reverse().map((event, index) => {
-              const isLatest = index === 0;         
-              return (
-                <li key={event.id}>
-                  <DropdownItem
-                    onItemClick={closeDropdown}
-                    className={`flex flex-col items-start gap-1 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5 ${
-                      isLatest ? "bg-orange-50 dark:bg-orange-900/20" : ""
-                    }`}
-                  >
-                    <span className="font-medium text-gray-800 dark:text-white/90">
-                      {event.title}
-                    </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Event was added: "{event.title}"
-                      {isLatest && <span className="ml-1 text-xs text-orange-500 font-semibold"></span>}
-                    </span>
-                  </DropdownItem>
-                </li>
-              );
-            })
+            events.map((event) => (
+              <DropdownItem key={event.id}>
+                <div className="flex flex-col">
+                  <span className="font-medium text-gray-800 dark:text-gray-200">{event.title}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(event.startDate).toLocaleDateString()} - {new Date(event.endDate).toLocaleDateString()}
+                  </span>
+                </div>
+              </DropdownItem>
+            ))
           )}
         </ul>
       </Dropdown>
