@@ -19,6 +19,13 @@ const ToDo: React.FC = () => {
             <List size={40} /> {/* Changed icon */}
             <span className="text-lg">Timesheet</span>
           </button>
+          <button
+            onClick={() => navigate("/leave-approval")}
+            className="text-gray-800 dark:text-white/90 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] p-4 w-full sm:w-auto"
+          >
+            <List size={40} /> {/* Changed icon */}
+            <span className="text-lg">Leave Approval</span>
+          </button>
 
           <button
             onClick={() => navigate("/todo-open-shifts")}
