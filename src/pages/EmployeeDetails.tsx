@@ -145,27 +145,41 @@ const EmployeeDetails = () => {
   };
 
   const handleEmploymentEditClick = () => {
-    if (employmentDetails) {
-      setFormData(prev => ({
-        ...prev,
-        position: employmentDetails.position || "",
-        department: employmentDetails.department || "",
-        employmentType: employmentDetails.employmentType || "",
-        rank: employmentDetails.rank || ""
-      }));
-      setShowEmploymentModal(true);
-    }
+    setFormData({
+      firstName: account?.firstName || "",
+      lastName: account?.lastName || "",
+      email: account?.email || "",
+      phone: account?.phone || "",
+      country: account?.country || "",
+      city: account?.city || "",
+      postalCode: account?.postalCode || "",
+      position: employmentDetails?.position || "",
+      department: employmentDetails?.department || "",
+      employmentType: employmentDetails?.employmentType || "",
+      rate: employmentDetails?.rate || "",
+      bank: employmentDetails?.bank || "",
+      rank: employmentDetails?.rank || ""
+    });
+    setShowEmploymentModal(true);
   };
 
   const handleCompensationEditClick = () => {
-    if (employmentDetails) {
-      setFormData(prev => ({
-        ...prev,
-        rate: employmentDetails.rate || "",
-        bank: employmentDetails.bank || ""
-      }));
-      setShowCompensationModal(true);
-    }
+    setFormData({
+      firstName: account?.firstName || "",
+      lastName: account?.lastName || "",
+      email: account?.email || "",
+      phone: account?.phone || "",
+      country: account?.country || "",
+      city: account?.city || "",
+      postalCode: account?.postalCode || "",
+      position: employmentDetails?.position || "",
+      department: employmentDetails?.department || "",
+      employmentType: employmentDetails?.employmentType || "",
+      rate: employmentDetails?.rate || "",
+      bank: employmentDetails?.bank || "",
+      rank: employmentDetails?.rank || ""
+    });
+    setShowCompensationModal(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -742,13 +756,19 @@ const EmployeeDetails = () => {
                 </div>
                 <div>
                   <Label htmlFor="employmentType">Employment Type</Label>
-                  <Input
+                  <select
                     id="employmentType"
-                    type="text"
                     name="employmentType"
                     value={formData.employmentType}
                     onChange={handleInputChange}
-                  />
+                    className="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 text-gray-800 dark:text-white/90"
+                  >
+                    <option value="">Select Employment Type</option>
+                    <option value="Open-Shift">Open-Shift</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Part-Time">Part-Time</option>
+                    <option value="Apprenticeship">Apprenticeship</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="rate">Rate</Label>
@@ -830,13 +850,19 @@ const EmployeeDetails = () => {
                 </div>
                 <div>
                   <Label htmlFor="employmentType">Employment Type</Label>
-                  <Input
+                  <select
                     id="employmentType"
-                    type="text"
                     name="employmentType"
                     value={formData.employmentType}
                     onChange={handleInputChange}
-                  />
+                    className="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 text-gray-800 dark:text-white/90"
+                  >
+                    <option value="">Select Employment Type</option>
+                    <option value="Open-Shift">Open-Shift</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Part-Time">Part-Time</option>
+                    <option value="Apprenticeship">Apprenticeship</option>
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="rank">Rank</Label>

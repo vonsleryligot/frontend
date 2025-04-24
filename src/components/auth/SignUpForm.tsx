@@ -30,6 +30,7 @@ export default function SignUpForm() {
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [countries, setCountries] = useState<{ label: string; value: string }[]>([]);
   const [cities, setCities] = useState<{ label: string; value: string }[]>([]);
@@ -97,29 +98,71 @@ export default function SignUpForm() {
     setPasswordError(password && e.target.value !== password ? "Passwords do not match" : "");
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow numbers
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setPhone(value);
+  };
+
+  const validateFields = () => {
+    const errors: Record<string, string> = {};
+    
+    if (step === 1) {
+      if (!firstName) errors.firstName = "First name is required";
+      if (!lastName) errors.lastName = "Last name is required";
+      if (!email) errors.email = "Email is required";
+      if (!phone) errors.phone = "Phone is required";
+      if (!password) errors.password = "Password is required";
+      if (!confirmPassword) errors.confirmPassword = "Please confirm your password";
+      if (password && confirmPassword && password !== confirmPassword) {
+        errors.confirmPassword = "Passwords do not match";
+      }
+    } else {
+      if (!country) errors.country = "Country is required";
+      if (!city) errors.city = "City is required";
+      if (!postalCode) errors.postalCode = "Postal code is required";
+      if (!acceptTerms) errors.acceptTerms = "You must accept the terms and conditions";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const getInputClassName = (fieldName: string) => {
+    if (fieldErrors[fieldName]) {
+      return "border-red-500";
+    }
+    // Check if the field has a value and no error
+    const fieldValue = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      country,
+      city,
+      postalCode,
+    }[fieldName];
+    
+    if (fieldValue && !fieldErrors[fieldName]) {
+      return "border-green-500";
+    }
+    return "";
+  };
+
   const handleNext = (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
+    setFieldErrors({});
+
+    if (!validateFields()) {
+      return;
+    }
 
     if (step === 1) {
-      if (!firstName || !lastName  || !email || !phone || !password || !confirmPassword) {
-        setError("All fields are required");
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
       setStep(2);
     } else {
-      if (!country || !city || !postalCode) {
-        setError("Please select your country, city, and postal code");
-        return;
-      }
-      if (!acceptTerms) {
-        setError("You must accept the terms and conditions");
-        return;
-      }
       handleFinalSubmit();
     }
   };
@@ -173,7 +216,7 @@ export default function SignUpForm() {
                     <select
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="w-full p-2 border rounded-lg text-gray-500 dark:text-gray-400"
+                      className={`w-full p-2 border rounded-lg text-gray-500 dark:text-gray-400 ${title ? "border-green-500" : ""}`}
                     >
                       <option value="Mr.">Mr.</option>
                       <option value="Ms.">Ms.</option>
@@ -183,11 +226,25 @@ export default function SignUpForm() {
 
                   <div>
                     <Label>First Name<span className="text-error-500">*</span></Label>
-                    <Input type="text" placeholder="Enter your first name" value={firstName} onChange={(e) => setFirstName(capitalizeFirstLetter(e.target.value))} />
+                    <Input 
+                      type="text" 
+                      placeholder="Enter your first name" 
+                      value={firstName} 
+                      onChange={(e) => setFirstName(capitalizeFirstLetter(e.target.value))}
+                      className={getInputClassName("firstName")}
+                    />
+                    {fieldErrors.firstName && <p className="text-red-500 text-sm mt-1">{fieldErrors.firstName}</p>}
                   </div>
                   <div>
                     <Label>Last Name<span className="text-error-500">*</span></Label>
-                    <Input type="text" placeholder="Enter your last name" value={lastName} onChange={(e) => setLastName(capitalizeFirstLetter(e.target.value))} />
+                    <Input 
+                      type="text" 
+                      placeholder="Enter your last name" 
+                      value={lastName} 
+                      onChange={(e) => setLastName(capitalizeFirstLetter(e.target.value))}
+                      className={getInputClassName("lastName")}
+                    />
+                    {fieldErrors.lastName && <p className="text-red-500 text-sm mt-1">{fieldErrors.lastName}</p>}
                   </div>
                   {/* <div>
                     <Label>Department<span className="text-error-500">*</span></Label>
@@ -219,31 +276,59 @@ export default function SignUpForm() {
                   </div> */}
                   <div>
                     <Label>Email<span className="text-error-500">*</span></Label>
-                    <Input type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <Input 
+                      type="email" 
+                      placeholder="Enter your email" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={getInputClassName("email")}
+                    />
+                    {fieldErrors.email && <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>}
                   </div>
                   <div>
                     <Label>Phone<span className="text-error-500">*</span></Label>
-                    <Input type="tel" placeholder="Enter your phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                    <Input 
+                      type="tel" 
+                      placeholder="Enter your phone number" 
+                      value={phone} 
+                      onChange={handlePhoneChange}
+                      className={getInputClassName("phone")}
+                      maxLength={15}
+                    />
+                    {fieldErrors.phone && <p className="text-red-500 text-sm mt-1">{fieldErrors.phone}</p>}
                   </div>
                   <div>
                     <Label>Password<span className="text-error-500">*</span></Label>
                     <div className="relative">
-                      <Input type={showPassword ? "text" : "password"} placeholder="Enter your password" value={password} onChange={handlePasswordChange} />
+                      <Input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Enter your password" 
+                        value={password} 
+                        onChange={handlePasswordChange}
+                        className={getInputClassName("password")}
+                      />
                       <span onClick={() => setShowPassword(!showPassword)} className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2">
                         {showPassword ? <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
                       </span>
                     </div>
+                    {fieldErrors.password && <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>}
                   </div>
                   <div>
                     <Label>Confirm Password<span className="text-error-500">*</span></Label>
                     <div className="relative">
-                      <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm your password" value={confirmPassword} onChange={handleConfirmPasswordChange} />
+                      <Input 
+                        type={showConfirmPassword ? "text" : "password"} 
+                        placeholder="Confirm your password" 
+                        value={confirmPassword} 
+                        onChange={handleConfirmPasswordChange}
+                        className={getInputClassName("confirmPassword")}
+                      />
                       <span onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2">
                         {showConfirmPassword ? <EyeIcon className="fill-gray-500 dark:fill-gray-400 size-5" /> : <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400 size-5" />}
                       </span>
                     </div>
+                    {fieldErrors.confirmPassword && <p className="text-red-500 text-sm mt-1">{fieldErrors.confirmPassword}</p>}
                   </div>
-                  {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
                   <button type="button" onClick={handleNext} className="w-full bg-brand-500 text-white rounded-lg py-3">
                     Next
                   </button>
@@ -261,8 +346,15 @@ export default function SignUpForm() {
                           setCity(""); // reset city when changing country
                         }}
                         placeholder="Select your country"
-                        className="text-sm"
+                        className={`text-sm ${getInputClassName("country")}`}
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            borderColor: fieldErrors.country ? "#ef4444" : country ? "#22c55e" : base.borderColor,
+                          }),
+                        }}
                       />
+                      {fieldErrors.country && <p className="text-red-500 text-sm mt-1">{fieldErrors.country}</p>}
                     </div>
                     {country && (
                       <div>
@@ -272,14 +364,28 @@ export default function SignUpForm() {
                           value={cities.find((c) => c.value === city)}
                           onChange={(selected) => setCity(selected?.value || "")}
                           placeholder="Select your city"
-                          className="text-sm"
+                          className={`text-sm ${getInputClassName("city")}`}
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              borderColor: fieldErrors.city ? "#ef4444" : city ? "#22c55e" : base.borderColor,
+                            }),
+                          }}
                         />
+                        {fieldErrors.city && <p className="text-red-500 text-sm mt-1">{fieldErrors.city}</p>}
                       </div>
                     )}
                     {city && (
                       <div>
                         <Label>Postal Code<span className="text-error-500">*</span></Label>
-                        <Input type="text" placeholder="Enter your postal code" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+                        <Input 
+                          type="text" 
+                          placeholder="Enter your postal code" 
+                          value={postalCode} 
+                          onChange={(e) => setPostalCode(e.target.value)}
+                          className={getInputClassName("postalCode")}
+                        />
+                        {fieldErrors.postalCode && <p className="text-red-500 text-sm mt-1">{fieldErrors.postalCode}</p>}
                       </div>
                     )}
                   <div className="flex items-center gap-3">
@@ -288,6 +394,7 @@ export default function SignUpForm() {
                       I accept the <span className="text-gray-800 dark:text-white/90">Terms and Conditions</span> and <span className="text-gray-800 dark:text-white">Privacy Policy</span>.
                     </p>
                   </div>
+                  {fieldErrors.acceptTerms && <p className="text-red-500 text-sm">{fieldErrors.acceptTerms}</p>}
                   <button type="button" onClick={() => setStep(1)} className="w-full bg-gray-500 text-white rounded-lg py-3">
                     Back
                   </button>

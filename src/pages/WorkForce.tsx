@@ -80,9 +80,11 @@ const WorkForce = () => {
         accountsWithEmployment.map(async (account) => {
           try {
             const imgResponse = await fetch(`http://localhost:4000/profile-uploads/${account.id}`);
-            if (!imgResponse.ok) throw new Error("No profile image");
-            const imgData = await imgResponse.json();
-            return { ...account, profile_image: `http://localhost:4000${imgData.profile.profile_image}` };
+            if (imgResponse.ok) {
+              const imgData = await imgResponse.json();
+              return { ...account, profile_image: `http://localhost:4000${imgData.profile.profile_image}` };
+            }
+            return { ...account, profile_image: null };
           } catch {
             return { ...account, profile_image: null };
           }

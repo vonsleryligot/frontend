@@ -45,7 +45,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (storedToken && userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        console.log("Stored User Data:", parsedUser); // Debug log
+        console.log("Stored Employment Type:", parsedUser.employmentType); // Debug log
+        setUser(parsedUser);
         setToken(storedToken);
         setIsAuthenticated(true);
       } catch (error) {
@@ -58,12 +61,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
   
 
-  const login = (userData: User, token: string) => {
-    localStorage.setItem("authToken", token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-    setToken(token);
-    setIsAuthenticated(true);
+  const login = async (userData: User, token: string) => {
+    try {
+      // Ensure employmentType is properly set
+      console.log("Login User Data:", userData); // Debug log
+      console.log("Employment Type:", userData.employmentType); // Debug log
+      
+      // Fetch employment type from employments/account endpoint
+      const response = await fetch(`http://localhost:4000/employments/account/${userData.id}`);
+      if (!response.ok) throw new Error("Failed to fetch employment data");
+      
+      const employmentData = await response.json();
+      console.log("Employment Data:", employmentData);
+      
+      // Update user data with employment type
+      const updatedUserData = {
+        ...userData,
+        employmentType: employmentData.employmentType || userData.employmentType
+      };
+      
+      console.log("Updated User Data:", updatedUserData); // Debug log
+      
+      // Store the updated user data
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("user", JSON.stringify(updatedUserData));
+      setUser(updatedUserData);
+      setToken(token);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Error during login:", error);
+      throw error; // Re-throw to handle in the calling component
+    }
   };
 
   const logout = () => {

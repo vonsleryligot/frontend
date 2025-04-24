@@ -69,7 +69,7 @@ export default function UserEmploymentCard() {
     }
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -221,7 +221,19 @@ export default function UserEmploymentCard() {
               </div>
               <div>
                 <Label htmlFor="employmentType">Employment Type</Label>
-                <Input id="employmentType" type="text" name="employmentType" value={formData.employmentType} onChange={handleChange} />
+                <select
+                  id="employmentType"
+                  name="employmentType"
+                  value={formData.employmentType}
+                  onChange={handleChange}
+                  className="w-full h-10 px-4 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 text-gray-800 dark:text-white/90"
+                >
+                  <option value="">Select Employment Type</option>
+                  <option value="Open-Shift">Open-Shift</option>
+                  <option value="Regular">Regular</option>
+                  <option value="Part-Time">Part-Time</option>
+                  <option value="Apprenticeship">Apprenticeship</option>
+                </select>
               </div>
               <div>
                 <Label htmlFor="department">Department</Label>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import { formatTimeForDisplay } from "../utils/timeUtils";
 
 interface TimesheetEntry {
   id: number;
@@ -9,12 +10,14 @@ interface TimesheetEntry {
     lastName: string;
   };
   shift: {
-    timeIn: string | null;
-    timeOut: string | null;
-    timeInImage: string | null;  // URL for Time In Image
-    timeOutImage: string | null; // URL for Time Out Image
+    date: string;
+    timeIn: string;
+    timeOut: string;
+    timeInImage: string | null;
+    timeOutImage: string | null;
   };
   status: string;
+  requestTime: string | null;
 }
 
 interface RawTimesheetEntry {
@@ -27,8 +30,24 @@ interface RawTimesheetEntry {
   timeInImage?: string;
   timeOutImage?: string;
   status?: string;
+  createdAt?: string;
 }
 
+const formatDateTime = (datetime: string | null) => {
+  if (!datetime) return "N/A";
+  const date = new Date(datetime);
+  if (isNaN(date.getTime())) return "N/A";
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  
+  return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
+};
 
 const Timesheet: React.FC = () => {
   const [timesheetData, setTimesheetData] = useState<TimesheetEntry[]>([]);
@@ -55,25 +74,48 @@ const Timesheet: React.FC = () => {
       const rawData = response.data.data || response.data; // fallback if array
       const total = response.data.total || rawData.length;
   
-      const formattedData = rawData.map((entry: RawTimesheetEntry) => {
-        const user = entry.account
-          ? { firstName: entry.account.firstName, lastName: entry.account.lastName }
-          : { firstName: "Unknown", lastName: "" };
+      const formattedData = rawData
+        .map((entry: RawTimesheetEntry) => {
+          const user = entry.account
+            ? { firstName: entry.account.firstName, lastName: entry.account.lastName }
+            : { firstName: "Unknown", lastName: "" };
   
-        const timeMatch = entry.details?.match(/Time In - (.*?), Time Out - (.*)/);
-        const timeIn = timeMatch ? timeMatch[1] : null;
-        const timeOut = timeMatch ? timeMatch[2] : null;
+          let shiftData = {
+            date: "",
+            timeIn: "",
+            timeOut: "",
+            timeInImage: entry.timeInImage || null,
+            timeOutImage: entry.timeOutImage || null
+          };
   
-        const timeInImage = entry.timeInImage || null;
-        const timeOutImage = entry.timeOutImage || null;
+          try {
+            if (entry.details) {
+              const parsedDetails = JSON.parse(entry.details);
+              shiftData = {
+                date: parsedDetails.date || "",
+                timeIn: parsedDetails.timeIn || "",
+                timeOut: parsedDetails.timeOut || "",
+                timeInImage: entry.timeInImage || null,
+                timeOutImage: entry.timeOutImage || null
+              };
+            }
+          } catch (error) {
+            console.error("Error parsing details:", error);
+          }
   
-        return {
-          id: entry.id,
-          user,
-          shift: { timeIn, timeOut, timeInImage, timeOutImage },
-          status: entry.status || "N/A",
-        };
-      });
+          return {
+            id: entry.id,
+            user,
+            shift: shiftData,
+            status: entry.status || "N/A",
+            requestTime: entry.createdAt || null,
+          };
+        })
+        .sort((a: TimesheetEntry, b: TimesheetEntry) => {
+          if (!a.requestTime) return 1;
+          if (!b.requestTime) return -1;
+          return new Date(b.requestTime).getTime() - new Date(a.requestTime).getTime();
+        });
   
       setTimesheetData(formattedData);
       setTotalPages(Math.ceil(total / itemsPerPage)); // this is important!
@@ -137,6 +179,7 @@ const Timesheet: React.FC = () => {
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Employee</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Time In</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Time Out</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Request Time</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Status</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm">Actions</th>
               </tr>
@@ -144,7 +187,7 @@ const Timesheet: React.FC = () => {
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {timesheetData.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center p-4 text-gray-500">
+                  <td colSpan={6} className="text-center p-4 text-gray-500">
                     No timesheet data available.
                   </td>
                 </tr>
@@ -161,7 +204,7 @@ const Timesheet: React.FC = () => {
                       onMouseEnter={() => setHoveredTimeIn(entry.shift.timeInImage)}
                       onMouseLeave={() => setHoveredTimeIn(null)}
                     >
-                      {entry.shift.timeIn ? new Date(entry.shift.timeIn).toLocaleTimeString() : "N/A"}
+                      {formatDateTime(entry.shift.timeIn)}
                       {hoveredTimeIn === entry.shift.timeInImage && entry.shift.timeInImage && (
                         <div className="image-hover absolute top-0 left-0 mt-2">
                           <img src={entry.shift.timeInImage} alt="Time In" className="w-32 h-auto" />
@@ -173,12 +216,15 @@ const Timesheet: React.FC = () => {
                       onMouseEnter={() => setHoveredTimeOut(entry.shift.timeOutImage)}
                       onMouseLeave={() => setHoveredTimeOut(null)}
                     >
-                      {entry.shift.timeOut ? new Date(entry.shift.timeOut).toLocaleTimeString() : "N/A"}
+                      {formatDateTime(entry.shift.timeOut)}
                       {hoveredTimeOut === entry.shift.timeOutImage && entry.shift.timeOutImage && (
                         <div className="image-hover absolute top-0 left-0 mt-2">
                           <img src={entry.shift.timeOutImage} alt="Time Out" className="w-32 h-auto" />
                         </div>
                       )}
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                      {formatDateTime(entry.requestTime)}
                     </td>
                     <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
                       {entry.status || "N/A"}

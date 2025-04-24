@@ -105,38 +105,45 @@ export default function UserMetaCard() {
     }
   
     try {
-      // Prepare the request data, now including both 'password' and 'confirmPassword'
+      // Prepare the request data
       const requestData = { password, confirmPassword };
   
-      console.log("Request data:", requestData); // Debugging: log the data being sent
+      console.log("Making request to:", `http://localhost:4000/accounts/${user.id}`);
+      console.log("Request data:", requestData);
+      console.log("Token:", token);
   
       const response = await axios.put(
         `http://localhost:4000/accounts/${user.id}`,
         requestData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,  // Send token for authorization
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
           },
         }
       );
   
-      console.log("Backend response:", response); // Debugging: log the backend response
+      console.log("Response status:", response.status);
+      console.log("Response data:", response.data);
   
       if (response.status === 200) {
         toast.success("Password updated successfully!");
-        setPasswordModalOpen(false);  // Close modal after success
-        setPasswordFormData({ password: "", confirmPassword: "" });  // Reset form data
+        setPasswordModalOpen(false);
+        setPasswordFormData({ password: "", confirmPassword: "" });
       } else {
         toast.error("Password update failed, please try again.");
       }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
+        console.error("Axios Error:", err);
+        console.error("Error Response:", err.response?.data);
         const message = err.response?.data?.message || err.message;
         toast.error(`Error: ${message}`);
-        console.log("Axios Error Response:", err.response?.data);  // Debugging
       } else if (err instanceof Error) {
+        console.error("Error:", err);
         toast.error(err.message);
       } else {
+        console.error("Unknown Error:", err);
         toast.error("An error occurred while updating your password.");
       }
     } finally {

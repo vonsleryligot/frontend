@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import { formatTimeForDisplay, calculateTotalHours } from "../utils/timeUtils";
 
 interface Shift {
   id: number;
@@ -12,86 +13,58 @@ interface Shift {
   totalHours: string | null;
   shifts: string;
   status: string;
-  imageId: string | null; // Added for time-in image
-  timeOutImageId: string | null; // Added for time-out image
-}
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
+  imageId: string | null;
+  timeOutImageId: string | null;
   employmentType?: string;
 }
 
-// interface ActionLog {
-//   id: number;
-//   shiftId: number;
-//   userId: number;
-//   timeIn: string;
-//   timeOut: string;
-//   status: string;
-// }
+interface ActionLog {
+  id: number;
+  userId: number;
+  shiftId: number;
+  timeIn: string;
+  timeOut: string;
+  status: string;
+  details: string;
+}
 
 export default function RegularShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
-  // const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
-  // const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
-  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
-
-  // const handleImageClick = (imageUrl: string) => {
-  //   setModalImage(imageUrl);
-  //   setIsModalOpen(true);
-  // };
-
-  // const closeModal = () => {
-  //   setIsModalOpen(false);
-  //   setModalImage(null);
-  // };
-
-  // Pagination state
+  const [isRegularEmployee, setIsRegularEmployee] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
+  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setUserId(user.id);
-  
-      // Fetch current user detail
-      fetch(`http://localhost:4000/accounts/${user.id}`)
+      
+      fetch(`http://localhost:4000/employments/account/${user.id}`)
         .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch current user");
+          if (!res.ok) {
+            throw new Error(`Failed to fetch employment data: ${res.status} ${res.statusText}`);
+          }
           return res.json();
         })
-        .then((userData: User) => {
-          setUsers([userData]); // Set as single-user array
+        .then((employmentData) => {
+          if (employmentData.employmentType) {
+            const isRegular = employmentData.employmentType.toLowerCase() === "regular";
+            setIsRegularEmployee(isRegular);
+          } else {
+            setIsRegularEmployee(false);
+          }
         })
         .catch((error) => {
-          console.error("Error fetching current user:", error);
+          console.error("Error fetching employment data:", error);
+          setIsRegularEmployee(false);
         });
     }
-  }, []);
-  
-
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch("http://localhost:4000/accounts");
-        if (!response.ok) throw new Error("Failed to fetch users");
-        const data: User[] = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-    fetchUsers();
   }, []);
 
   useEffect(() => {
@@ -100,31 +73,28 @@ export default function RegularShifts() {
         setLoading(true);
         setError(null);
   
-        // Retrieve the user role from localStorage (assuming the role is stored there)
-        const storedUser = localStorage.getItem("user");
-        if (!storedUser) throw new Error("User not found");
-  
-        const user = JSON.parse(storedUser);
-        const isAdmin = user.role === "admin"; // Assuming 'role' is stored in the user data
-  
-        const response = await fetch("http://localhost:4000/attendances");
+        const response = await fetch(`http://localhost:4000/attendances?userId=${userId}`);
         if (!response.ok) throw new Error("Failed to fetch attendance records");
   
         const data: Shift[] = await response.json();
+
+        const employmentResponse = await fetch(`http://localhost:4000/employments/account/${userId}`);
+        if (!employmentResponse.ok) throw new Error("Failed to fetch employment data");
+        const employmentData = await employmentResponse.json();
   
-        const filteredShifts = isAdmin
-          ? data // Admin can see all shifts
-          : data.filter((shift) => shift.userId === user.id); // Regular users see only their own shifts
-  
-        // Sort the shifts by timeIn
-        const sortedShifts = filteredShifts.sort((a, b) => {
+        const sortedShifts = data.sort((a, b) => {
           if (a.timeIn && b.timeIn) {
-            return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort by timeIn descending
+            return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
           }
-          return a.timeIn ? -1 : 1; // If timeIn is null, treat as older
+          return a.timeIn ? -1 : 1;
         });
+
+        const shiftsWithEmploymentType = sortedShifts.map(shift => ({
+          ...shift,
+          employmentType: employmentData.employmentType
+        }));
   
-        setShifts(sortedShifts);
+        setShifts(shiftsWithEmploymentType);
       } catch (error) {
         setError("Error fetching attendance records.");
         console.error("Error fetching attendance:", error);
@@ -133,35 +103,24 @@ export default function RegularShifts() {
       }
     };
   
-    if (userId !== null) {
+    if (userId !== null && isRegularEmployee) {
       fetchAttendance();
     }
-  }, [userId]);
-  
+  }, [userId, isRegularEmployee]);
 
-  // useEffect(() => {
-  //   const fetchActionLogs = async () => {
-  //     try {
-  //       const response = await fetch("http://localhost:4000/action-logs");
-  //       if (!response.ok) throw new Error("Failed to fetch action logs");
-  //       const data: ActionLog[] = await response.json();
-  //       setActionLogs(data);
-  //     } catch (error) {
-  //       console.error("Error fetching action logs:", error);
-  //     }
-  //   };
-  //   fetchActionLogs();
-  // }, []);
-
-  const formatTime = (datetime: string) => {
-    const date = new Date(datetime);
-    if (isNaN(date.getTime())) return "12:00 AM";
-    let hours = date.getHours();
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    return `${hours}:${minutes} ${ampm}`;
-  };
+  useEffect(() => {
+    const fetchActionLogs = async () => {
+      try {
+        const response = await fetch("http://localhost:4000/action-logs");
+        if (!response.ok) throw new Error("Failed to fetch action logs");
+        const data: ActionLog[] = await response.json();
+        setActionLogs(data);
+      } catch (error) {
+        console.error("Error fetching action logs:", error);
+      }
+    };
+    fetchActionLogs();
+  }, []);
 
   const handleUpdateShift = async () => {
     if (!selectedShift || !selectedShift.id) return;
@@ -188,80 +147,87 @@ export default function RegularShifts() {
         throw new Error(actionLogData.message || "Failed to create action log");
       }
   
-      console.log("Action Log Submitted:", actionLogData); // Debug log
-  
-      // Update the shift status to pending after successful submission
       setShifts((prev) =>
         prev.map((shift) =>
-          shift.id === selectedShift.id ? { ...shift, status: "pending" } : shift
+          shift.id === selectedShift.id 
+            ? { 
+                ...shift, 
+                status: "pending",
+                employmentType: selectedShift.employmentType
+              } 
+            : shift
         )
       );
   
-      console.log("Updated Shifts:", shifts); // Debug the updated shifts state
-  
-      // Fetch updated shifts from the backend
-      const response = await fetch("http://localhost:4000/attendances");
+      const response = await fetch(`http://localhost:4000/attendances?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch updated attendance records");
   
       const data: Shift[] = await response.json();
   
-      // Sort and filter shifts again (similar to your initial useEffect)
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        const isAdmin = user.role === "admin";
+      const employmentResponse = await fetch(`http://localhost:4000/employments/account/${userId}`);
+      if (!employmentResponse.ok) throw new Error("Failed to fetch employment data");
+      const employmentData = await employmentResponse.json();
   
-        const filteredShifts = isAdmin
-          ? data
-          : data.filter((shift) => shift.userId === user.id);
+      const sortedShifts = data.sort((a, b) => {
+        if (a.timeIn && b.timeIn) {
+          return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
+        }
+        return a.timeIn ? -1 : 1;
+      });
   
-        const sortedShifts = filteredShifts.sort((a, b) => {
-          if (a.timeIn && b.timeIn) {
-            return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
-          }
-          return a.timeIn ? -1 : 1;
-        });
+      const shiftsWithEmploymentType = sortedShifts.map(shift => ({
+        ...shift,
+        employmentType: employmentData.employmentType
+      }));
   
-        setShifts(sortedShifts); // Update the state with the latest shifts
-      }
+      setShifts(shiftsWithEmploymentType);
   
       toast.success("Shift update request submitted!", {
         position: "bottom-right",
         autoClose: 3000,
       });
   
-      setSelectedShift(null); // Reset the selected shift
+      setSelectedShift(null);
     } catch (error) {
       console.error("Error creating action log:", error);
       toast.error("Something went wrong. Please try again.");
     }
   };
-  
-  // const getUserFullName = (userId: number) => {
-  //   const user = users.find((user) => user.id === userId);
-  //   return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
-  // };
 
-  const getUserEmploymentType = (userId: number) => {
-    const user = users.find((user) => user.id === userId);
-    return user ? user.employmentType ?? "Not Available" : "Not Available";
+  const getActionLogStatus = (shiftId: number, originalStatus: string) => {
+    const log = actionLogs.find(log => {
+      try {
+        const details = JSON.parse(log.details);
+        return details.shiftId === shiftId;
+      } catch (e) {
+        return false;
+      }
+    });
+    return log ? log.status : originalStatus;
   };
 
   // Pagination Logic
   const indexOfLastShift = currentPage * itemsPerPage;
   const indexOfFirstShift = indexOfLastShift - itemsPerPage;
   const currentShifts = shifts.slice(indexOfFirstShift, indexOfLastShift);
-
   const totalPages = Math.ceil(shifts.length / itemsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
 
+  if (!isRegularEmployee) {
+    return (
+      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+        <p className="text-center text-red-500">This page is only accessible to regular employees.</p>
+      </div>
+    );
+  }
+
   return (
     <>
-    <PageBreadcrumb pageTitle="Home / Hours / Regular Shift Logs" />
-      <div className="p-6  rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+      <PageBreadcrumb pageTitle="Home / Hours / Regular Logs" />
+      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
         {loading && <p className="text-center text-gray-500">Loading shifts...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
 
@@ -269,78 +235,86 @@ export default function RegularShifts() {
           <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
             <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
-                {/* <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th> */}
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Date</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time In</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Total Hours</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Shifts</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employment Type</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Status</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
-              {currentShifts.length > 0 ? (
-                currentShifts.map((shift) => {
-                     // Add console logs here to inspect image IDs
-                    console.log('Time In Image ID:', shift.imageId);  // Log Time In Image ID
-                    console.log('Time Out Image ID:', shift.timeOutImageId);  // Log Time Out Image ID
-                  const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
-                  const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
+            <tbody>
+              {currentShifts.map((shift) => {
+                const actionLogStatus = getActionLogStatus(shift.id, shift.status);
+                const displayStatus = actionLogs.some(log => {
+                  try {
+                    const details = JSON.parse(log.details);
+                    return details.shiftId === shift.id;
+                  } catch (e) {
+                    return false;
+                  }
+                }) ? actionLogStatus : shift.status;
 
-                  return (
-                    <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
-                      {/* <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td> */}
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeIn ? formatTime(shift.timeIn) : "-"}
-                        {shift.imageId && (
-                          <img
-                            src={`http://localhost:4000/uploads/${shift.imageId}`}
-                            alt="Time In"
-                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                          />
-                        )}
-                      </td>
-
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeOut ? formatTime(shift.timeOut) : "-"}
-                        {shift.timeOutImageId && (
-                          <img
-                            src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
-                            alt="Time Out"
-                            className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
-                          />
-                        )}
-                      </td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
-                        <button
-                          className="text-blue-600 hover:underline mr-2"
-                          onClick={() => setSelectedShift(shift)}
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={8} className="text-center p-4">
-                    No shifts found.
-                  </td>
-                </tr>
-              )}
+                return (
+                  <tr key={shift.id} className="hover:bg-gray-800">
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                      {new Date(shift.date).toLocaleDateString()}
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
+                      {formatTimeForDisplay(shift.timeIn)}
+                      {shift.imageId && (
+                        <img
+                          src={`http://localhost:4000/uploads/${shift.imageId}`}
+                          alt="Time In"
+                          className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
+                          style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+                        />
+                      )}
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
+                      {formatTimeForDisplay(shift.timeOut)}
+                      {shift.timeOutImageId && (
+                        <img
+                          src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
+                          alt="Time Out"
+                          className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
+                          style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+                        />
+                      )}
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                      {calculateTotalHours(shift.timeIn, shift.timeOut)}
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                      {shift.employmentType || "Not Available"}
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        displayStatus === "approved" ? "bg-green-100 text-green-800" :
+                        displayStatus === "rejected" ? "bg-red-100 text-red-800" :
+                        displayStatus === "pending" ? " text-yellow-800" :
+                        "text-gray-800"
+                      }`}>
+                        {displayStatus}
+                      </span>
+                    </td>
+                    <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                      <button
+                        className="text-blue-600 hover:underline mr-2"
+                        onClick={() => setSelectedShift(shift)}
+                        disabled={displayStatus === "approved"}
+                      >
+                        Edit
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination Controls */}
         <div className="flex justify-between items-center mt-4">
           <button
             className="bg-gray-500 text-white px-4 py-2 rounded"
@@ -361,7 +335,6 @@ export default function RegularShifts() {
           </button>
         </div>
 
-        {/* Shift Edit Modal */}
         {selectedShift && (
           <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-40 flex items-center justify-center">
             <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg max-w-sm w-full text-sm">

@@ -309,31 +309,93 @@ const AddAccount: React.FC = () => {
   return (
     <>
       <PageBreadcrumb pageTitle="Home / Work Force / Add Account" />
-      <div className="p-8 rounded-xl shadow-xl max-w-4xl mx-auto bg-gray-800 text-gray-300">
-        <h3 className="text-2xl font-semibold mb-6 text-white">Add Account (Step {step} of 3)</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{renderStep()}</div>
-
-        <div className="flex justify-between mt-8">
-          {step > 1 && (
-            <button onClick={handlePrevious} className="px-6 py-3 bg-gray-600 rounded-lg hover:bg-gray-700">
-              Previous
-            </button>
-          )}
-          {step < 3 ? (
-            <button onClick={handleNext} className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleAddAccount}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit"}
-            </button>
-          )}
+      <div className="p-8 rounded-2xl shadow-2xl max-w-5xl mx-auto bg-gradient-to-br from-gray-800 to-gray-900 text-gray-300">
+        <div className="mb-8">
+          <p className="text-gray-400">Please fill in the required information below</p>
         </div>
+
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3].map((stepNumber) => (
+              <div key={stepNumber} className="flex items-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    step >= stepNumber
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-700 text-gray-400"
+                  }`}
+                >
+                  {stepNumber}
+                </div>
+                {stepNumber < 3 && (
+                  <div
+                    className={`h-1 w-24 mx-2 ${
+                      step > stepNumber ? "bg-blue-500" : "bg-gray-700"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2 text-sm text-gray-400">
+            <span>Personal Info</span>
+            <span>Work Details</span>
+            <span>Location</span>
+          </div>
+        </div>
+
+   
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{renderStep()}</div>
+
+          <div className="flex justify-between mt-8">
+            {step > 1 && (
+              <button
+                onClick={handlePrevious}
+                className="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Previous
+              </button>
+            )}
+            {step < 3 ? (
+              <button
+                onClick={handleNext}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 ml-auto"
+              >
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                onClick={handleAddAccount}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2 ml-auto"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        
         <ToastContainer position="bottom-right" autoClose={3000} hideProgressBar theme="dark" />
       </div>
     </>

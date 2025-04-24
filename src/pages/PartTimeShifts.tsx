@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageBreadcrumb from "../components/common/PageBreadCrumb";
+import { formatTimeForDisplay, calculateTotalHours } from "../utils/timeUtils";
 
 interface Shift {
   id: number;
@@ -12,8 +13,9 @@ interface Shift {
   totalHours: string | null;
   shifts: string;
   status: string;
-  imageId: string | null; // Added for time-in image
-  timeOutImageId: string | null; // Added for time-out image
+  imageId: string | null;
+  timeOutImageId: string | null;
+  employmentType?: string;
 }
 
 interface User {
@@ -23,14 +25,15 @@ interface User {
   employmentType?: string;
 }
 
-// interface ActionLog {
-//   id: number;
-//   shiftId: number;
-//   userId: number;
-//   timeIn: string;
-//   timeOut: string;
-//   status: string;
-// }
+interface ActionLog {
+  id: number;
+  userId: number;
+  shiftId: number;
+  timeIn: string;
+  timeOut: string;
+  status: string;
+  details: string;
+}
 
 export default function PartTimeShifts() {
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -39,41 +42,56 @@ export default function PartTimeShifts() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
-  // const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
-  // const [modalImage, setModalImage] = useState<string | null>(null); // State for modal image
-  // const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State for modal visibility
-
-  // const handleImageClick = (imageUrl: string) => {
-  //   setModalImage(imageUrl);
-  //   setIsModalOpen(true);
-  // };
-
-  // const closeModal = () => {
-  //   setIsModalOpen(false);
-  //   setModalImage(null);
-  // };
-
-  // Pagination state
+  const [isPartTimeEmployee, setIsPartTimeEmployee] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
+  const [actionLogs, setActionLogs] = useState<ActionLog[]>([]);
+
+  const getActionLogStatus = (shiftId: number, originalStatus: string) => {
+    const log = actionLogs.find(log => {
+      try {
+        const details = JSON.parse(log.details);
+        return details.shiftId === shiftId;
+      } catch (e) {
+        return false;
+      }
+    });
+    return log ? log.status : originalStatus;
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       const user = JSON.parse(storedUser);
       setUserId(user.id);
-  
-      // Fetch current user detail
-      fetch(`http://localhost:4000/accounts/${user.id}`)
+      console.log("Current User ID:", user.id);
+
+      // Fetch employment type from employments/account endpoint
+      fetch(`http://localhost:4000/employments/account/${user.id}`)
         .then((res) => {
-          if (!res.ok) throw new Error("Failed to fetch current user");
+          console.log("Employment API Response Status:", res.status);
+          if (!res.ok) {
+            console.error("Response not OK:", res.status, res.statusText);
+            throw new Error(`Failed to fetch employment data: ${res.status} ${res.statusText}`);
+          }
           return res.json();
         })
-        .then((userData: User) => {
-          setUsers([userData]); // Set as single-user array
+        .then((employmentData) => {
+          console.log("Raw Employment API Response:", employmentData);
+          console.log("Employment Type from API:", employmentData.employmentType);
+          if (employmentData.employmentType) {
+            console.log("User Employment Type:", employmentData.employmentType);
+            const isPartTime = employmentData.employmentType.toLowerCase() === "part-time";
+            console.log("Is Part Time Employee:", isPartTime);
+            setIsPartTimeEmployee(isPartTime);
+          } else {
+            console.warn("No employment type found in employment data");
+            setIsPartTimeEmployee(false);
+          }
         })
         .catch((error) => {
-          console.error("Error fetching current user:", error);
+          console.error("Error fetching employment data:", error);
+          setIsPartTimeEmployee(false);
         });
     }
   }, []);
@@ -97,19 +115,35 @@ export default function PartTimeShifts() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch("http://localhost:4000/attendances");
+
+        // Fetch attendance records for the specific user using query parameter
+        const response = await fetch(`http://localhost:4000/attendances?userId=${userId}`);
         if (!response.ok) throw new Error("Failed to fetch attendance records");
+
         const data: Shift[] = await response.json();
-        const sortedShifts = data
-          .filter((shift) => shift.userId === userId) // Only current user's shifts
-          .sort((a, b) => {
-            if (a.timeIn && b.timeIn) {
-              return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime(); // Sort descending
-            }
-            return a.timeIn ? -1 : 1;
-          });
-  
-        setShifts(sortedShifts);
+        console.log("Fetched attendance data:", data);
+
+        // Fetch employment type for the user
+        const employmentResponse = await fetch(`http://localhost:4000/employments/account/${userId}`);
+        if (!employmentResponse.ok) throw new Error("Failed to fetch employment data");
+        const employmentData = await employmentResponse.json();
+        console.log("Fetched employment data:", employmentData);
+
+        // Sort the shifts by time
+        const sortedShifts = data.sort((a, b) => {
+          if (a.timeIn && b.timeIn) {
+            return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
+          }
+          return a.timeIn ? -1 : 1;
+        });
+
+        // Add employment type to each shift
+        const shiftsWithEmploymentType = sortedShifts.map(shift => ({
+          ...shift,
+          employmentType: employmentData.employmentType
+        }));
+
+        setShifts(shiftsWithEmploymentType);
       } catch (error) {
         setError("Error fetching attendance records.");
         console.error("Error fetching attendance:", error);
@@ -118,24 +152,24 @@ export default function PartTimeShifts() {
       }
     };
   
-    if (userId !== null) {
+    if (userId !== null && isPartTimeEmployee) {
       fetchAttendance();
     }
-  }, [userId]);
+  }, [userId, isPartTimeEmployee]);
 
-  // useEffect(() => {
-  //   const fetchActionLogs = async () => {
-  //     try {
-  //       const response = await fetch("http://localhost:4000/action-logs");
-  //       if (!response.ok) throw new Error("Failed to fetch action logs");
-  //       const data: ActionLog[] = await response.json();
-  //       setActionLogs(data);
-  //     } catch (error) {
-  //       console.error("Error fetching action logs:", error);
-  //     }
-  //   };
-  //   fetchActionLogs();
-  // }, []);
+  useEffect(() => {
+    const fetchActionLogs = async () => {
+      try {
+        const response = await fetch("http://localhost:4000/action-logs");
+        if (!response.ok) throw new Error("Failed to fetch action logs");
+        const data: ActionLog[] = await response.json();
+        setActionLogs(data);
+      } catch (error) {
+        console.error("Error fetching action logs:", error);
+      }
+    };
+    fetchActionLogs();
+  }, []);
 
   const formatTime = (datetime: string) => {
     const date = new Date(datetime);
@@ -172,16 +206,53 @@ export default function PartTimeShifts() {
         throw new Error(actionLogData.message || "Failed to create action log");
       }
 
+      console.log("Action Log Submitted:", actionLogData);
+
+      // Update the shift status to pending after successful submission
+      setShifts((prev) =>
+        prev.map((shift) =>
+          shift.id === selectedShift.id 
+            ? { 
+                ...shift, 
+                status: "pending",
+                employmentType: selectedShift.employmentType
+              } 
+            : shift
+        )
+      );
+
+      console.log("Updated Shifts:", shifts);
+
+      // Fetch updated shifts from the backend
+      const response = await fetch(`http://localhost:4000/attendances?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch updated attendance records");
+
+      const data: Shift[] = await response.json();
+
+      // Fetch employment type for the user
+      const employmentResponse = await fetch(`http://localhost:4000/employments/account/${userId}`);
+      if (!employmentResponse.ok) throw new Error("Failed to fetch employment data");
+      const employmentData = await employmentResponse.json();
+
+      // Sort and add employment type to shifts
+      const sortedShifts = data.sort((a, b) => {
+        if (a.timeIn && b.timeIn) {
+          return new Date(b.timeIn).getTime() - new Date(a.timeIn).getTime();
+        }
+        return a.timeIn ? -1 : 1;
+      });
+
+      const shiftsWithEmploymentType = sortedShifts.map(shift => ({
+        ...shift,
+        employmentType: employmentData.employmentType
+      }));
+
+      setShifts(shiftsWithEmploymentType);
+
       toast.success("Shift update request submitted!", {
         position: "bottom-right",
         autoClose: 3000,
       });
-
-      setShifts((prev) =>
-        prev.map((shift) =>
-          shift.id === selectedShift.id ? { ...shift, status: "pending" } : shift
-        )
-      );
 
       setSelectedShift(null);
     } catch (error) {
@@ -189,11 +260,6 @@ export default function PartTimeShifts() {
       toast.error("Something went wrong. Please try again.");
     }
   };
-
-  // const getUserFullName = (userId: number) => {
-  //   const user = users.find((user) => user.id === userId);
-  //   return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
-  // };
 
   const getUserEmploymentType = (userId: number) => {
     const user = users.find((user) => user.id === userId);
@@ -211,6 +277,14 @@ export default function PartTimeShifts() {
     setCurrentPage(pageNumber);
   };
 
+  if (!isPartTimeEmployee) {
+    return (
+      <div className="p-6 rounded-lg shadow-md border border-gray-100 dark:border-gray-800 text-sm text-gray-700 dark:text-gray-200">
+        <p className="text-center text-red-500">This page is only accessible to part-time employees.</p>
+      </div>
+    );
+  }
+
   return (
     <>
     <PageBreadcrumb pageTitle="Home / Hours / Part Time Logs" />
@@ -222,12 +296,11 @@ export default function PartTimeShifts() {
           <table className="w-full border border-gray-100 rounded-lg shadow-sm text-left">
             <thead className="bg-gray-100 dark:border-gray-800 dark:text-gray-300 dark:bg-white/[0.03]">
               <tr>
-                {/* <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employee</th> */}
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Date</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time In</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Time Out</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Total Hours</th>
-                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Shifts</th>
+                <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Employment Type</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Status</th>
                 <th className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold">Actions</th>
               </tr>
@@ -235,46 +308,62 @@ export default function PartTimeShifts() {
             <tbody className="divide-y divide-gray-200 text-gray-700 dark:text-gray-300">
               {currentShifts.length > 0 ? (
                 currentShifts.map((shift) => {
-                     // Add console logs here to inspect image IDs
-                    console.log('Time In Image ID:', shift.imageId);  // Log Time In Image ID
-                    console.log('Time Out Image ID:', shift.timeOutImageId);  // Log Time Out Image ID
-                  const pendingStatus = localStorage.getItem(`shift_${shift.id}_status`);
-                  const displayStatus = shift.status === "approved" ? "approved" : pendingStatus || shift.status;
+                  const actionLogStatus = getActionLogStatus(shift.id, shift.status);
+                  const displayStatus = actionLogs.some(log => {
+                    try {
+                      const details = JSON.parse(log.details);
+                      return details.shiftId === shift.id;
+                    } catch (e) {
+                      return false;
+                    }
+                  }) ? actionLogStatus : shift.status;
 
                   return (
                     <tr key={shift.id} className="hover:bg-gray-100 dark:hover:bg-gray-900">
-                      {/* <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserFullName(shift.userId)}</td> */}
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.date}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                        {new Date(shift.date).toLocaleDateString()}
+                      </td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeIn ? formatTime(shift.timeIn) : "-"}
+                        {formatTimeForDisplay(shift.timeIn)}
                         {shift.imageId && (
                           <img
                             src={`http://localhost:4000/uploads/${shift.imageId}`}
                             alt="Time In"
                             className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
+                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
                           />
                         )}
                       </td>
-
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm relative group">
-                        {shift.timeOut ? formatTime(shift.timeOut) : "-"}
+                        {formatTimeForDisplay(shift.timeOut)}
                         {shift.timeOutImageId && (
                           <img
                             src={`http://localhost:4000/uploads/${shift.timeOutImageId}`}
                             alt="Time Out"
                             className="absolute inset-0 w-20 h-20 object-cover opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-300 ease-in-out"
-                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }} // Centers the image
+                            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
                           />
                         )}
                       </td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.totalHours ? Number(shift.totalHours).toFixed(2) : "-"}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{getUserEmploymentType(shift.userId)}</td>
-                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm font-semibold capitalize">{displayStatus}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                        {calculateTotalHours(shift.timeIn, shift.timeOut)} hours
+                      </td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">{shift.employmentType || "Not Available"}</td>
+                      <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          displayStatus === "approved" ? "text-green-800" :
+                          displayStatus === "rejected" ? "text-red-800" :
+                          displayStatus === "pending" ? "text-yellow-800" :
+                          "text-gray-800"
+                        }`}>
+                          {displayStatus}
+                        </span>
+                      </td>
                       <td className="border border-gray-100 dark:border-gray-800 p-3 text-sm">
                         <button
                           className="text-blue-600 hover:underline mr-2"
                           onClick={() => setSelectedShift(shift)}
+                          disabled={displayStatus === "approved"}
                         >
                           Edit
                         </button>
@@ -284,7 +373,7 @@ export default function PartTimeShifts() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="text-center p-4">
+                  <td colSpan={7} className="text-center p-4">
                     No shifts found.
                   </td>
                 </tr>

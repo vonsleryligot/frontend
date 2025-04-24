@@ -74,7 +74,7 @@ const navItems: NavItem[] = [
       {
         name: "Open Shifts",
         path: "/hours/open-shifts",
-        allowedEmploymentTypes: ["Open-Shifts"],
+        allowedEmploymentTypes: ["Open-Shift", "open-shift"],
       },
       {
         name: "Regular Shifts",
@@ -178,7 +178,7 @@ const navItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, setIsMobileOpen } = useSidebar();
   const { user } = useAuth();
   const location = useLocation();
   const [openSubmenu, setOpenSubmenu] = useState<{ type: "main" | "others"; index: number } | null>(null);
@@ -205,6 +205,15 @@ const AppSidebar: React.FC = () => {
         ? null
         : { type: menuType, index }
     );
+  };
+
+  const handleMenuItemClick = () => {
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+    }
+    if (isHovered) {
+      setIsHovered(false);
+    }
   };
 
   const filteredNavItems = navItems.filter((item) => user?.role && item.roles.includes(user.role));
@@ -250,6 +259,7 @@ const AppSidebar: React.FC = () => {
             nav.path && (
               <Link
                 to={nav.path}
+                onClick={handleMenuItemClick}
                 className={`menu-item group ${
                   isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                 }`}
@@ -287,17 +297,39 @@ const AppSidebar: React.FC = () => {
                     if (subItem.roles && !subItem.roles.includes(user?.role || "")) {
                       return false;
                     }
-                    if (subItem.allowedEmploymentTypes && !subItem.allowedEmploymentTypes.includes(user?.employmentType || "")) {
-                      return false;
+                    if (subItem.allowedEmploymentTypes) {
+                      // Get employment type from localStorage if not in user object
+                      let userEmploymentType = user?.employmentType;
+                      if (!userEmploymentType) {
+                        const storedUser = localStorage.getItem("user");
+                        if (storedUser) {
+                          try {
+                            const parsedUser = JSON.parse(storedUser);
+                            userEmploymentType = parsedUser.employmentType;
+                            console.log("Using employment type from localStorage:", userEmploymentType);
+                          } catch (error) {
+                            console.error("Error parsing user data from localStorage:", error);
+                          }
+                        }
+                      }
+                      
+                      // Convert both to lowercase for case-insensitive comparison
+                      const userEmploymentTypeLower = (userEmploymentType || "").toLowerCase();
+                      const allowedTypes = subItem.allowedEmploymentTypes.map(type => type.toLowerCase());
+                      console.log("User Employment Type:", userEmploymentTypeLower); // Debug log
+                      console.log("Allowed Types:", allowedTypes); // Debug log
+                      console.log("Is Allowed:", allowedTypes.includes(userEmploymentTypeLower)); // Debug log
+                      return allowedTypes.includes(userEmploymentTypeLower);
                     }
                     return true;
                   })
                   .map((subItem) => (
                     <li key={subItem.name}>
                       <Link
-                        to={subItem.path || "#"}  // Default to '#' if path is undefined
+                        to={subItem.path || "#"}
+                        onClick={handleMenuItemClick}
                         className={`menu-dropdown-item ${
-                          isActive(subItem.path || "")  // Use fallback if path is undefined
+                          isActive(subItem.path || "")
                             ? "menu-dropdown-item-active"
                             : "menu-dropdown-item-inactive"
                         }`}
