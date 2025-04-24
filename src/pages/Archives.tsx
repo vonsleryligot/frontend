@@ -18,6 +18,7 @@ interface Account {
   profile_image?: string | null;
   archived: boolean;
   status: string;
+  isArchived?: boolean;
 }
 
 const Archive = () => {
@@ -40,28 +41,21 @@ const Archive = () => {
         return;
       }
 
-      // Fetch all accounts
-      const response = await axios.get('http://localhost:4000/accounts', {
+      // Fetch accounts with includeArchived=true to get archived accounts
+      const response = await axios.get('http://localhost:4000/accounts?includeArchived=true', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      console.log('All accounts:', response.data);
+      console.log('API Response:', response.data);
       
-      // Log detailed information about each account
-      response.data.forEach((account: Account, index: number) => {
-        console.log(`Account ${index + 1}:`, account);
-        console.log(`Account ${index + 1} archived status:`, account.archived);
-        console.log(`Account ${index + 1} status:`, account.status);
-      });
-
-      // Filter for archived accounts - check both archived flag and status
+      // Filter for archived accounts
       const archivedAccounts = response.data.filter((account: Account) => 
         account.archived === true || account.status === 'Inactive'
       );
       
-      console.log('Archived accounts:', archivedAccounts);
+      console.log('Filtered archived accounts:', archivedAccounts);
       
       // Try to fetch employment details for each account
       let employments: any[] = [];
@@ -73,8 +67,6 @@ const Archive = () => {
         });
         if (employmentResponse.status === 200) {
           employments = employmentResponse.data;
-        } else {
-          console.warn("Failed to fetch employments, using default values");
         }
       } catch (employmentError) {
         console.warn("Error fetching employments:", employmentError);
@@ -93,7 +85,7 @@ const Archive = () => {
       });
       
       setAccounts(accountsWithEmployment);
-      setTotalPages(Math.ceil(accountsWithEmployment.length / 5)); // Assuming 5 items per page
+      setTotalPages(Math.ceil(accountsWithEmployment.length / 5));
     } catch (error) {
       console.error('Error fetching archived accounts:', error);
       setError('Failed to load archived accounts');
@@ -119,13 +111,13 @@ const Archive = () => {
       });
 
       if (response.status === 200) {
-        toast.success('Account unarchived successfully');
+        toast.success('Account restored successfully');
         // Remove the unarchived account from the list
         setAccounts(accounts.filter(account => account.id !== id));
       }
     } catch (error) {
       console.error('Error unarchiving account:', error);
-      toast.error('Failed to unarchive account');
+      toast.error('Failed to restore account');
     } finally {
       setUnarchivingId(null);
     }
