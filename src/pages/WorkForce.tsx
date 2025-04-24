@@ -144,6 +144,14 @@ const WorkForce = () => {
 
   const handleArchive = async (accountId: number) => {
     try {
+      // Find the account to check its role
+      const accountToArchive = accounts.find(account => account.id === accountId);
+      
+      if (accountToArchive?.role.toLowerCase() === 'admin') {
+        toast.error('Admin accounts cannot be archived');
+        return;
+      }
+
       setArchivingId(accountId);
       const token = localStorage.getItem('token');
       if (!token) {
